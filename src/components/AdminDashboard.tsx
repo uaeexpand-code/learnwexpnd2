@@ -4,7 +4,7 @@ import { db, handleFirestoreError, OperationType } from '../firebase';
 import { Tutorial } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Edit2, Trash2, Eye, EyeOff, MoreVertical, Search, Filter, BookOpen, Settings as SettingsIcon } from 'lucide-react';
+import { Plus, Edit2, Trash2, Eye, EyeOff, MoreVertical, Search, Filter, BookOpen, Settings as SettingsIcon, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { formatDate, cn } from '../utils';
 import SettingsManager from './SettingsManager';
@@ -18,6 +18,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<AdminTab>('tutorials');
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !isAdmin) {
@@ -47,6 +48,8 @@ export default function AdminDashboard() {
         setLoading(false);
       },
       (error) => {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to load tutorials';
+        setError(errorMessage);
         handleFirestoreError(error, OperationType.LIST, 'tutorials');
       }
     );
@@ -90,6 +93,14 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-8">
+      {error && (
+        <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-xl">
+          <div className="flex items-center">
+            <AlertCircle className="w-5 h-5 text-red-500 mr-3" />
+            <p className="text-sm text-red-700 font-medium">{error}</p>
+          </div>
+        </div>
+      )}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
