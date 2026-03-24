@@ -41,23 +41,25 @@ service cloud.firestore {
 
     function isAdmin() {
       return isAuthenticated() &&
-        ((exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
-          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
-          request.auth.token.email == "uae.expand@gmail.com");
+        (request.auth.token.email == "uae.expand@gmail.com" ||
+         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'));
     }
 
     function isValidTutorial(data) {
-      return data.keys().hasOnly(['title', 'category', 'description', 'published', 'steps', 'createdAt', 'updatedAt']) &&
-             data.keys().hasAll(['title', 'category', 'description', 'published', 'steps', 'createdAt', 'updatedAt']) &&
+      let requiredFields = ['title', 'category', 'description', 'published', 'steps', 'createdAt', 'updatedAt'];
+      return data.keys().hasAll(requiredFields) &&
              data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
-             data.category is string && data.category.size() > 0 && data.category.size() < 100 &&
-             data.description is string && data.description.size() < 2000 &&
+             data.category is string && data.category.size() > 0 &&
+             data.description is string && data.description.size() < 5000 &&
              data.published is bool &&
              data.steps is list && data.steps.size() <= 50 &&
              data.steps.all(step, 
-               step.keys().hasOnly(['title', 'content', 'image_url', 'drive_url', 'tip']) &&
                step.keys().hasAll(['title', 'content']) &&
-               step.title is string && step.content is string
+               step.title is string && step.content is string &&
+               (!('image_url' in step) || step.image_url is string) &&
+               (!('drive_url' in step) || step.drive_url is string) &&
+               (!('tip' in step) || step.tip is string)
              ) &&
              data.createdAt is timestamp &&
              data.updatedAt is timestamp;
