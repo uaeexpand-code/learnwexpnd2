@@ -47,19 +47,21 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </div>
 
             <div className="hidden md:flex items-center space-x-4">
-              {/* Database Status Indicator */}
-              <div className="flex items-center space-x-2 px-3 py-1.5 rounded-full bg-gray-50 border border-gray-100">
-                {dbStatus === 'checking' ? (
-                  <div className="w-2 h-2 rounded-full bg-gray-300 animate-pulse" />
-                ) : dbStatus === 'connected' ? (
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                ) : (
-                  <AlertCircle className="w-3.5 h-3.5 text-red-500" />
-                )}
-                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
-                  {dbStatus === 'checking' ? 'Connecting...' : dbStatus === 'connected' ? 'Database Connected' : 'Connection Error'}
-                </span>
-              </div>
+              {/* Database Status Indicator - Admin Only */}
+              {isAdmin && (
+                <div className="flex items-center space-x-2 px-3 py-1.5 rounded-full bg-gray-50 border border-gray-100">
+                  {dbStatus === 'checking' ? (
+                    <div className="w-2 h-2 rounded-full bg-gray-300 animate-pulse" />
+                  ) : dbStatus === 'connected' ? (
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                  ) : (
+                    <AlertCircle className="w-3.5 h-3.5 text-red-500" />
+                  )}
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                    {dbStatus === 'checking' ? 'Connecting...' : dbStatus === 'connected' ? 'Database Connected' : 'Connection Error'}
+                  </span>
+                </div>
+              )}
 
               {profile && (
                 <div className="flex items-center space-x-3 ml-4 pl-4 border-l border-gray-100">
@@ -121,6 +123,22 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
                 <div className="flex-grow overflow-y-auto">
                   <div className="p-4 space-y-6">
+                    {/* Database Status Indicator - Admin Only (Mobile) */}
+                    {isAdmin && (
+                      <div className="flex items-center space-x-2 px-3 py-1.5 rounded-full bg-gray-50 border border-gray-100 w-fit">
+                        {dbStatus === 'checking' ? (
+                          <div className="w-2 h-2 rounded-full bg-gray-300 animate-pulse" />
+                        ) : dbStatus === 'connected' ? (
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                        ) : (
+                          <AlertCircle className="w-3.5 h-3.5 text-red-500" />
+                        )}
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                          {dbStatus === 'checking' ? 'Connecting...' : dbStatus === 'connected' ? 'Database Connected' : 'Connection Error'}
+                        </span>
+                      </div>
+                    )}
+
                     {/* Main Nav */}
                     <div className="space-y-1">
                       {navItems.map((item) => (
