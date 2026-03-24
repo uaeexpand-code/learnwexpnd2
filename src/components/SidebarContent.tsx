@@ -51,10 +51,6 @@ export default function SidebarContent({ onItemClick }: { onItemClick?: () => vo
         
         // Sort in memory to avoid composite index requirements
         const sortedData = [...data].sort((a, b) => {
-          // Primary sort by order, secondary by createdAt
-          if (a.order !== b.order) {
-            return (a.order || 0) - (b.order || 0);
-          }
           const dateA = a.createdAt?.seconds || 0;
           const dateB = b.createdAt?.seconds || 0;
           return dateA - dateB;
