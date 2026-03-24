@@ -11,8 +11,6 @@ service cloud.firestore {
     //   - title: string (required)
     //   - category: string (required, enum: Products, Orders, Pages & Content, Settings)
     //   - description: string (required)
-    //   - difficulty: string (required, enum: Beginner, Intermediate, Advanced)
-    //   - estimated_time: string (required)
     //   - published: boolean (required)
     //   - createdAt: timestamp (required)
     //   - updatedAt: timestamp (required)

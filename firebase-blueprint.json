@@ -8,8 +8,6 @@
         "title": { "type": "string", "description": "The title of the tutorial." },
         "category": { "type": "string", "enum": ["Products", "Orders", "Pages & Content", "Settings"], "description": "The category of the tutorial." },
         "description": { "type": "string", "description": "A brief overview of the tutorial." },
-        "difficulty": { "type": "string", "enum": ["Beginner", "Intermediate", "Advanced"], "description": "The difficulty level." },
-        "estimated_time": { "type": "string", "description": "Estimated time to complete (e.g., '5 mins')." },
         "published": { "type": "boolean", "description": "Whether the tutorial is visible to clients." },
         "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp." },
         "updatedAt": { "type": "string", "format": "date-time", "description": "Last update timestamp." },
@@ -29,7 +27,7 @@
           }
         }
       },
-      "required": ["title", "category", "description", "difficulty", "estimated_time", "published", "steps"]
+      "required": ["title", "category", "description", "published", "steps"]
     },
     "User": {
       "title": "User",
