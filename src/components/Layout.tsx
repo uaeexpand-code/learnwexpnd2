@@ -34,61 +34,60 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-white flex flex-col">
       {/* Navigation */}
-      <nav className="bg-white border-b border-gray-100 sticky top-0 z-50">
-        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center space-x-4">
-              {/* Mobile menu button */}
-              <div className="flex items-center md:hidden">
+      <nav className="bg-white border-b border-gray-100 sticky top-0 z-50 h-16 flex items-center">
+        <div className="max-w-[1600px] mx-auto px-6 w-full flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            {/* Mobile menu button */}
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="md:hidden p-2 -ml-2 text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+
+            <Link to="/" className="flex items-center gap-3 group">
+              <div className="w-8 h-8 bg-[#27ae60] rounded-lg flex items-center justify-center group-hover:rotate-12 transition-transform">
+                <span className="text-white font-black text-lg">E</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-sm font-bold text-gray-900 tracking-tight leading-none font-display">{settings.appName}</span>
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Documentation</span>
+              </div>
+            </Link>
+          </div>
+
+          <div className="flex items-center gap-6">
+            {/* Database Status Indicator - Admin Only */}
+            {isAdmin && (
+              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 border border-gray-100">
+                {dbStatus === 'checking' ? (
+                  <div className="w-1.5 h-1.5 rounded-full bg-gray-300 animate-pulse" />
+                ) : dbStatus === 'connected' ? (
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                ) : (
+                  <AlertCircle className="w-3.5 h-3.5 text-red-500" />
+                )}
+                <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500">
+                  {dbStatus === 'checking' ? 'Connecting...' : dbStatus === 'connected' ? 'Connected' : 'Error'}
+                </span>
+              </div>
+            )}
+
+            {profile && (
+              <div className="flex items-center gap-4 pl-6 border-l border-gray-100">
+                <div className="hidden xs:flex flex-col items-end">
+                  <p className="text-xs font-bold text-gray-900 leading-none">{profile.displayName}</p>
+                  <p className="text-[9px] text-gray-400 uppercase tracking-widest mt-1">{profile.role}</p>
+                </div>
                 <button
-                  onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  className="p-2 rounded-xl text-gray-600 hover:text-emerald-600 transition-all flex items-center"
+                  onClick={handleLogout}
+                  className="p-2 text-gray-300 hover:text-red-500 transition-colors"
+                  title="Logout"
                 >
-                  {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                  <LogOut className="w-4 h-4" />
                 </button>
               </div>
-
-              <Link to="/" className="flex items-center space-x-2 group">
-                <span className="text-lg sm:text-2xl font-bold text-gray-900 tracking-tight group-hover:text-emerald-600 transition-colors">{settings.appName}</span>
-                <span className="hidden xs:inline text-lg sm:text-2xl font-light text-gray-400">Documentation</span>
-              </Link>
-            </div>
-
-            <div className="hidden md:flex items-center space-x-4">
-              {/* Database Status Indicator - Admin Only */}
-              {isAdmin && (
-                <div className="flex items-center space-x-2 px-3 py-1.5 rounded-full bg-gray-50 border border-gray-100">
-                  {dbStatus === 'checking' ? (
-                    <div className="w-2 h-2 rounded-full bg-gray-300 animate-pulse" />
-                  ) : dbStatus === 'connected' ? (
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                  ) : (
-                    <AlertCircle className="w-3.5 h-3.5 text-red-500" />
-                  )}
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
-                    {dbStatus === 'checking' ? 'Connecting...' : dbStatus === 'connected' ? 'Database Connected' : 'Connection Error'}
-                  </span>
-                </div>
-              )}
-
-              {profile && (
-                <div className="flex items-center space-x-3 ml-4 pl-4 border-l border-gray-100">
-                  <div className="text-right">
-                    <p className="text-xs font-bold text-gray-900">{profile.displayName}</p>
-                    <p className="text-[10px] text-gray-400 uppercase tracking-widest">{profile.role}</p>
-                  </div>
-                  <button
-                    onClick={handleLogout}
-                    className="p-2 text-gray-400 hover:text-red-600 transition-colors"
-                    title="Logout"
-                  >
-                    <LogOut className="w-4 h-4" />
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Mobile menu button removed from here */}
+            )}
           </div>
         </div>
 

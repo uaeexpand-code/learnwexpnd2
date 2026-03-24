@@ -4,10 +4,30 @@ import { doc, onSnapshot, collection, query, where, orderBy, getDocs } from 'fir
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { Tutorial } from '../types';
 import { useAuth } from '../contexts/AuthContext';
-import { ArrowLeft, Clock, Info, ChevronUp, Monitor, Smartphone, CheckCircle2, ArrowRight, ExternalLink, Link as LinkIcon } from 'lucide-react';
+import { ArrowLeft, Clock, Info, ChevronUp, Monitor, Smartphone, CheckCircle2, ArrowRight, ExternalLink, Link as LinkIcon, Menu, X, ChevronRight, Edit2 } from 'lucide-react';
 import { motion, useScroll, useSpring, AnimatePresence } from 'motion/react';
 import { getGoogleDriveEmbedUrl, cn } from '../utils';
 import ReactMarkdown from 'react-markdown';
+
+const markdownComponents = {
+  a: (props: any) => (
+    <a
+      {...props}
+      className="text-[#3498db] font-bold hover:text-[#2980b9] underline underline-offset-4 decoration-[#3498db]/30 hover:decoration-[#3498db] transition-all inline-flex items-center gap-1"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      {props.children}
+      <ExternalLink className="w-3 h-3 opacity-50" />
+    </a>
+  ),
+  strong: (props: any) => (
+    <strong className="font-bold text-gray-900" {...props} />
+  ),
+  p: (props: any) => (
+    <p className="mb-4 last:mb-0" {...props} />
+  )
+};
 
 export default function TutorialDetail() {
   const { id } = useParams<{ id: string }>();
@@ -18,6 +38,8 @@ export default function TutorialDetail() {
   const [loading, setLoading] = useState(true);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [platform, setPlatform] = useState<'desktop' | 'mobile'>('desktop');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [activeStep, setActiveStep] = useState(0);
 
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, {
@@ -29,6 +51,17 @@ export default function TutorialDetail() {
   useEffect(() => {
     const handleScroll = () => {
       setShowBackToTop(window.scrollY > 400);
+      
+      // Update active step based on scroll position
+      const sections = document.querySelectorAll('section[id^="step-"]');
+      let currentActive = 0;
+      sections.forEach((section, index) => {
+        const rect = section.getBoundingClientRect();
+        if (rect.top <= 150) {
+          currentActive = index;
+        }
+      });
+      setActiveStep(currentActive);
     };
     const checkPlatform = () => {
       setPlatform(window.innerWidth < 768 ? 'mobile' : 'desktop');
@@ -112,25 +145,11 @@ export default function TutorialDetail() {
 
   const renderContent = (content: string, step: any) => {
     // First, replace any {{link:text|url}} with markdown [text](url)
-    let processedContent = content.replace(/\{\{link:([^|]+)\|([^}]+)\}\}/g, '[$1]($2)');
-
-    const components = {
-      a: ({ node, ...props }: any) => (
-        <a
-          {...props}
-          className="text-emerald-600 font-bold hover:text-emerald-700 underline underline-offset-4 decoration-emerald-200 hover:decoration-emerald-500 transition-all inline-flex items-center gap-1"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          {props.children}
-          <ExternalLink className="w-3 h-3 opacity-50" />
-        </a>
-      )
-    };
+    const processedContent = content.replace(/\{\{link:([^|]+)\|([^}]+)\}\}/g, '[$1]($2)');
 
     if (!processedContent.includes('{{cta}}')) {
       return (
-        <ReactMarkdown components={components}>
+        <ReactMarkdown components={markdownComponents}>
           {processedContent}
         </ReactMarkdown>
       );
@@ -141,11 +160,9 @@ export default function TutorialDetail() {
       <div className="space-y-4">
         {parts.map((part, i) => (
           <React.Fragment key={i}>
-            {part.trim() && (
-              <ReactMarkdown components={components}>
-                {part}
-              </ReactMarkdown>
-            )}
+            <ReactMarkdown components={markdownComponents}>
+              {part}
+            </ReactMarkdown>
             {i < parts.length - 1 && <CTAButton text={step.cta_text} link={step.cta_link} />}
           </React.Fragment>
         ))}
@@ -168,16 +185,16 @@ export default function TutorialDetail() {
     : (tutorial.steps_mobile || (tutorial as any).steps || []);
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 sm:space-y-12 pb-20">
+    <div className="max-w-5xl mx-auto pb-20 px-6 sm:px-12">
       {/* Progress Bar */}
       <motion.div
-        className="fixed top-16 left-0 right-0 h-1 bg-emerald-500 z-[60] origin-left"
+        className="fixed top-0 left-0 right-0 h-1 bg-emerald-500 z-[100] origin-left"
         style={{ scaleX }}
       />
 
       {/* Draft Banner */}
       {isAdmin && !tutorial.published && (
-        <div className="bg-amber-50 border border-amber-100 p-4 rounded-2xl flex items-center justify-between">
+        <div className="mb-8 bg-amber-50 border border-amber-100 p-4 rounded-2xl flex items-center justify-between">
           <div className="flex items-center">
             <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center mr-3">
               <Clock className="w-4 h-4 text-amber-600" />
@@ -197,72 +214,43 @@ export default function TutorialDetail() {
       )}
 
       {/* Header */}
-      <header className="space-y-8">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-          <div className="space-y-4">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="inline-flex items-center px-3 py-1 bg-emerald-50 text-emerald-700 text-[10px] font-bold rounded-full uppercase tracking-widest"
-            >
-              {tutorial.category}
-            </motion.div>
-            <h1 className="text-3xl sm:text-6xl font-bold text-gray-900 tracking-tight leading-tight sm:leading-[1.1]">{tutorial.title}</h1>
-            <p className="text-lg sm:text-xl text-gray-500 leading-relaxed max-w-3xl">{tutorial.description}</p>
-            
-            {tutorial.cta_link && tutorial.cta_text && (
-              <div className="pt-4">
-                <a
-                  href={tutorial.cta_link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center px-6 py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100 group"
-                >
-                  {tutorial.cta_text}
-                  <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                </a>
-              </div>
-            )}
+      <header className="mb-16 space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-emerald-600 font-bold text-[10px] uppercase tracking-widest">
+            <span>{tutorial.category}</span>
+            <ChevronRight className="w-3 h-3 text-gray-300" />
+            <span className="text-gray-400">Guide</span>
           </div>
-          
           {isAdmin && (
             <Link
               to={`/ex-admin/edit/${tutorial.id}`}
-              className="w-full sm:w-auto px-6 py-3 bg-gray-900 text-white font-bold rounded-xl hover:bg-emerald-600 transition-all text-sm text-center shadow-lg shadow-gray-200"
+              className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 text-gray-600 text-[10px] font-bold rounded-lg hover:bg-gray-200 transition-colors uppercase tracking-wider"
             >
-              Edit Guide
+              <Edit2 className="w-3 h-3" />
+              Edit Tutorial
             </Link>
           )}
         </div>
-
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-8 border-t border-gray-100 gap-6">
-          <div className="flex items-center bg-gray-100 p-1 rounded-xl w-fit">
-            <button
-              onClick={() => setPlatform('desktop')}
-              className={cn(
-                "flex items-center px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all",
-                platform === 'desktop' ? "bg-white text-emerald-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
-              )}
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight leading-tight font-display">{tutorial.title}</h1>
+        <p className="text-sm sm:text-base text-gray-500 leading-relaxed">{tutorial.description}</p>
+        
+        {tutorial.cta_link && tutorial.cta_text && (
+          <div className="pt-4">
+            <a
+              href={tutorial.cta_link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center px-6 py-3 bg-[#27ae60] text-white font-bold rounded-lg hover:bg-[#219150] transition-all shadow-lg shadow-emerald-100 group"
             >
-              <Monitor className="w-3.5 h-3.5 sm:w-4 h-4 mr-1.5 sm:mr-2" />
-              Desktop
-            </button>
-            <button
-              onClick={() => setPlatform('mobile')}
-              className={cn(
-                "flex items-center px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all",
-                platform === 'mobile' ? "bg-white text-emerald-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
-              )}
-            >
-              <Smartphone className="w-3.5 h-3.5 sm:w-4 h-4 mr-1.5 sm:mr-2" />
-              Mobile
-            </button>
+              {tutorial.cta_text}
+              <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+            </a>
           </div>
-        </div>
+        )}
       </header>
 
-      {/* Steps as Sections */}
-      <div className="space-y-12 sm:space-y-20">
+      {/* Steps */}
+      <div className="space-y-12 sm:space-y-16">
         {currentSteps.map((step, index) => {
           const driveEmbedUrl = step.drive_url ? getGoogleDriveEmbedUrl(step.drive_url) : null;
           
@@ -272,17 +260,24 @@ export default function TutorialDetail() {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-100px" }}
-              className="space-y-4 sm:space-y-8 scroll-mt-24"
+              className={cn(
+                "scroll-mt-32 space-y-6 pb-10 sm:pb-12",
+                index !== currentSteps.length - 1 && "border-b border-gray-200"
+              )}
               id={`step-${index + 1}`}
             >
-              <div className="space-y-2 sm:space-y-4">
-                <h2 className="text-xl sm:text-3xl font-bold text-gray-900 flex items-center">
-                  <span className="text-emerald-500 mr-3 sm:mr-4 font-light">0{index + 1}.</span>
-                  {step.title}
-                </h2>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <span className="flex items-center justify-center w-7 h-7 rounded-full bg-emerald-50 text-emerald-600 text-xs font-bold border border-emerald-100">
+                    {index + 1}
+                  </span>
+                  <h2 className="text-lg sm:text-xl font-semibold text-gray-900 tracking-tight leading-tight font-display">
+                    {step.title}
+                  </h2>
+                </div>
                 
                 {step.content && (
-                  <div className="prose prose-base sm:prose-lg max-w-none text-gray-600 leading-relaxed">
+                  <div className="prose max-w-none">
                     {renderContent(step.content, step)}
                   </div>
                 )}
@@ -294,13 +289,15 @@ export default function TutorialDetail() {
                 )}
 
                 {step.tip && (
-                  <div className="bg-emerald-50/50 border-l-4 border-emerald-500 p-4 sm:p-6 rounded-r-xl mt-4 sm:mt-6">
-                    <div className="flex items-start">
-                      <Info className="w-5 h-5 text-emerald-600 mr-3 sm:mr-4 mt-1" />
-                      <div>
-                        <p className="text-[10px] sm:text-xs font-bold text-emerald-900 uppercase tracking-widest mb-1">Pro Tip</p>
-                        <p className="text-sm sm:text-base text-emerald-800 italic">{step.tip}</p>
-                      </div>
+                  <div className="bg-[#f8fafd] border-l-4 border-[#3498db] p-8 rounded-r-lg mt-12 mb-8">
+                    <div className="flex items-center gap-2 mb-3 text-[#3498db]">
+                      <Info className="w-5 h-5" />
+                      <span className="text-sm font-bold uppercase tracking-wider">Note</span>
+                    </div>
+                    <div className="text-[#2c3e50] leading-relaxed">
+                      <ReactMarkdown components={markdownComponents}>
+                        {step.tip}
+                      </ReactMarkdown>
                     </div>
                   </div>
                 )}
@@ -308,7 +305,7 @@ export default function TutorialDetail() {
 
               {/* Media Display */}
               {(driveEmbedUrl || step.image_url) && (
-                <div className="rounded-xl sm:rounded-3xl overflow-hidden shadow-xl sm:shadow-2xl shadow-emerald-100/50 border border-gray-100 bg-gray-50">
+                <div className="rounded-xl overflow-hidden border border-gray-100 bg-gray-50 shadow-sm mt-8">
                   {driveEmbedUrl ? (
                     <div className="aspect-video relative">
                       <iframe
@@ -329,44 +326,46 @@ export default function TutorialDetail() {
                   )}
                 </div>
               )}
+
+              {/* Section Divider */}
+              {index < currentSteps.length - 1 && (
+                <div className="pt-24 sm:pt-32">
+                  <div className="h-px bg-gray-100 w-full" />
+                </div>
+              )}
             </motion.section>
           );
         })}
       </div>
 
       {/* Footer Navigation */}
-      <footer className="pt-16 space-y-12">
+      <footer className="mt-32 pt-16 border-t border-gray-100 space-y-12">
         {nextTutorial && (
           <Link
             to={`/tutorial/${nextTutorial.id}`}
-            className="group block p-8 bg-gray-900 rounded-[2.5rem] text-white relative overflow-hidden transition-all hover:scale-[1.02] active:scale-[0.98]"
+            className="group block p-8 bg-gray-50 border border-gray-100 rounded-2xl relative overflow-hidden transition-all hover:bg-emerald-50 hover:border-emerald-100"
           >
-            <div className="absolute top-0 right-0 -mt-12 -mr-12 w-64 h-64 bg-emerald-500/20 rounded-full blur-3xl group-hover:bg-emerald-500/30 transition-colors" />
-            
-            <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
               <div className="space-y-2">
-                <p className="text-emerald-400 text-[10px] font-bold uppercase tracking-widest">Next Tutorial</p>
-                <h3 className="text-2xl sm:text-3xl font-bold group-hover:text-emerald-400 transition-colors">{nextTutorial.title}</h3>
-                <p className="text-gray-400 text-sm max-w-md line-clamp-1">{nextTutorial.description}</p>
+                <p className="text-emerald-600 text-[10px] font-bold uppercase tracking-widest">Up Next</p>
+                <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 group-hover:text-emerald-700 transition-colors">{nextTutorial.title}</h3>
+                <p className="text-gray-500 text-sm max-w-md line-clamp-1">{nextTutorial.description}</p>
               </div>
-              <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center group-hover:bg-emerald-500 transition-all">
-                <ArrowRight className="w-6 h-6 text-white" />
+              <div className="w-12 h-12 bg-white border border-gray-100 rounded-xl flex items-center justify-center group-hover:bg-[#27ae60] group-hover:border-[#27ae60] transition-all">
+                <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-white" />
               </div>
             </div>
           </Link>
         )}
 
-        <div className="flex items-center justify-between border-t border-gray-100 pt-8">
-          <Link
-            to="/"
-            className="text-sm font-bold text-gray-400 hover:text-emerald-600 transition-colors flex items-center group"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
-            Back to Overview
-          </Link>
-          <p className="text-xs text-gray-300 font-bold uppercase tracking-[0.2em]">
-            Documentation Hub
+        <div className="flex items-center justify-between pt-8 pb-12">
+          <p className="text-xs text-gray-400 font-bold uppercase tracking-[0.2em]">
+            © {new Date().getFullYear()} Documentation Hub
           </p>
+          <div className="flex items-center gap-6">
+            <a href="#" className="text-xs font-bold text-gray-400 hover:text-emerald-600 transition-colors">Support</a>
+            <a href="#" className="text-xs font-bold text-gray-400 hover:text-emerald-600 transition-colors">Contact</a>
+          </div>
         </div>
       </footer>
 
@@ -378,9 +377,9 @@ export default function TutorialDetail() {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="fixed bottom-6 right-6 p-4 bg-gray-900 text-white rounded-full shadow-2xl z-50 hover:bg-emerald-600 transition-colors"
+            className="fixed bottom-8 right-8 p-4 bg-gray-900 text-white rounded-xl shadow-2xl z-50 hover:bg-[#27ae60] transition-all active:scale-95"
           >
-            <ChevronUp className="w-6 h-6" />
+            <ChevronUp className="w-5 h-5" />
           </motion.button>
         )}
       </AnimatePresence>

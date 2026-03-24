@@ -134,21 +134,19 @@ export default function SidebarContent({ onItemClick }: { onItemClick?: () => vo
           if (items.length === 0 && !isAdmin && !searchQuery) return null;
 
           return (
-            <section key={category} className="space-y-3">
-              <div className="flex items-center justify-between group/header">
+            <section key={category} className="space-y-1">
+              <div className="flex items-center justify-between group/header px-2">
                 <button 
                   onClick={() => toggleCategory(category)}
-                  className="flex items-center space-x-3 flex-grow text-left"
+                  className="flex items-center space-x-2.5 flex-grow text-left py-2"
                 >
-                  <div className={cn(
-                    "w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300",
-                    isExpanded ? "bg-emerald-500 text-white shadow-lg shadow-emerald-100" : "bg-emerald-50 text-emerald-600"
-                  )}>
-                    <Icon className="w-4 h-4" />
-                  </div>
+                  <Icon className={cn(
+                    "w-4 h-4 transition-colors",
+                    isExpanded ? "text-emerald-500" : "text-gray-400"
+                  )} />
                   <span className={cn(
-                    "font-bold text-sm tracking-tight transition-colors",
-                    isExpanded ? "text-emerald-600" : "text-gray-600 hover:text-gray-900"
+                    "font-bold text-[13px] tracking-tight transition-colors font-display",
+                    isExpanded ? "text-gray-900" : "text-gray-500 hover:text-gray-700"
                   )}>
                     {category}
                   </span>
@@ -158,17 +156,17 @@ export default function SidebarContent({ onItemClick }: { onItemClick?: () => vo
                   {isAdmin && (
                     <Link
                       to={`/ex-admin/new?category=${encodeURIComponent(category)}`}
-                      className="p-1.5 text-gray-300 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
+                      className="p-1 text-gray-300 hover:text-emerald-600 rounded transition-all"
                       title={`Add tutorial to ${category}`}
                     >
-                      <Plus className="w-3.5 h-3.5" />
+                      <Plus className="w-3 h-3" />
                     </Link>
                   )}
                   <button 
                     onClick={() => toggleCategory(category)}
-                    className="p-1.5 text-gray-300 hover:text-gray-600 transition-all"
+                    className="p-1 text-gray-300 hover:text-gray-600 transition-all"
                   >
-                    <ChevronDown className={cn("w-4 h-4 transition-transform duration-300", !isExpanded && "-rotate-90")} />
+                    <ChevronDown className={cn("w-3.5 h-3.5 transition-transform duration-300", !isExpanded && "-rotate-90")} />
                   </button>
                 </div>
               </div>
@@ -179,7 +177,7 @@ export default function SidebarContent({ onItemClick }: { onItemClick?: () => vo
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
-                    className="relative ml-[18px] pl-6 border-l border-gray-100 space-y-1"
+                    className="space-y-0.5 ml-6.5"
                   >
                     {items.map((item) => {
                       const isActive = location.pathname === `/tutorial/${item.id}`;
@@ -189,16 +187,16 @@ export default function SidebarContent({ onItemClick }: { onItemClick?: () => vo
                             to={`/tutorial/${item.id}`}
                             onClick={onItemClick}
                             className={cn(
-                              "flex items-center justify-between py-2 text-sm transition-all group/item",
+                              "flex items-center justify-between px-3 py-1.5 text-[13px] rounded-lg transition-all group/item",
                               isActive 
-                                ? "text-emerald-600 font-bold" 
-                                : "text-gray-500 hover:text-gray-900"
+                                ? "bg-emerald-50 text-emerald-700 font-bold" 
+                                : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
                             )}
                           >
                             <span className="truncate">{item.title}</span>
                             <div className="flex items-center space-x-2">
                               {isAdmin && !item.published && (
-                                <span className="px-1.5 py-0.5 bg-amber-50 text-amber-600 text-[8px] font-bold uppercase tracking-tighter rounded border border-amber-100 flex-shrink-0">
+                                <span className="px-1 py-0.5 bg-amber-50 text-amber-600 text-[8px] font-bold uppercase tracking-tighter rounded border border-amber-100 flex-shrink-0">
                                   Draft
                                 </span>
                               )}
@@ -208,7 +206,7 @@ export default function SidebarContent({ onItemClick }: { onItemClick?: () => vo
                       );
                     })}
                     {items.length === 0 && isAdmin && (
-                      <li className="py-2 text-[10px] text-gray-400 italic">
+                      <li className="px-3 py-1.5 text-[11px] text-gray-400 italic">
                         No tutorials yet
                       </li>
                     )}
