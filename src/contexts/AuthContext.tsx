@@ -66,6 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await signInWithPopup(auth, googleProvider);
     } catch (error) {
       console.error('Login error:', error);
+      throw error; // Re-throw to allow UI handling
     }
   };
 
