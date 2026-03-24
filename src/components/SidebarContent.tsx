@@ -78,27 +78,6 @@ export default function SidebarContent({ onItemClick }: { onItemClick?: () => vo
 
   return (
     <div className="p-4 space-y-8">
-      {/* Home Link */}
-      <section>
-        <ul className="space-y-1">
-          <li>
-            <Link 
-              to="/" 
-              onClick={onItemClick}
-              className={cn(
-                "flex items-center space-x-3 px-3 py-2 rounded-xl text-sm font-bold transition-all",
-                location.pathname === '/' 
-                  ? "bg-emerald-50 text-emerald-600 shadow-sm" 
-                  : "text-gray-600 hover:bg-gray-50"
-              )}
-            >
-              <LayoutIcon className="w-5 h-5" />
-              <span>Overview</span>
-            </Link>
-          </li>
-        </ul>
-      </section>
-
       {/* Dynamic Categories */}
       {categories.map((category) => {
         const Icon = categoryIcons[category] || BookOpen;

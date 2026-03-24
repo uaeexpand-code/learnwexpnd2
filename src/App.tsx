@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SettingsProvider, useSettings } from './contexts/SettingsContext';
 import Layout from './components/Layout';
 import TutorialList from './components/TutorialList';
+import HomeRedirect from './components/HomeRedirect';
 import TutorialDetail from './components/TutorialDetail';
 import AdminDashboard from './components/AdminDashboard';
 import TutorialForm from './components/TutorialForm';
@@ -25,7 +26,7 @@ function AppRoutes() {
   return (
     <Layout>
       <Routes>
-        <Route path="/" element={<TutorialList />} />
+        <Route path="/" element={<HomeRedirect />} />
         <Route path="/tutorial/:id" element={<TutorialDetail />} />
         <Route path="/login" element={!user ? <Login /> : <Navigate to="/" replace />} />
         <Route path="/ex-admin" element={user ? <AdminDashboard /> : <Navigate to="/login" replace />} />

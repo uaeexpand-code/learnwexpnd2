@@ -29,9 +29,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     navigate('/');
   };
 
-  const navItems = [
-    { name: 'Documentation', path: '/', icon: BookOpen },
-  ];
+  const navItems: any[] = [];
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
