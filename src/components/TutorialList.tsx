@@ -37,11 +37,11 @@ export default function TutorialList() {
   return (
     <div className="max-w-5xl mx-auto space-y-16 pb-20">
       {/* Hero Section */}
-      <section className="relative overflow-hidden rounded-[2.5rem] bg-gray-900 p-8 sm:p-16 text-white">
+      <section className="relative overflow-hidden rounded-[2rem] sm:rounded-[2.5rem] bg-gray-900 p-6 sm:p-16 text-white">
         <div className="absolute top-0 right-0 -mt-20 -mr-20 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl" />
         <div className="absolute bottom-0 left-0 -mb-20 -ml-20 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl" />
         
-        <div className="relative z-10 space-y-8 max-w-2xl">
+        <div className="relative z-10 space-y-6 sm:space-y-8 max-w-2xl">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -55,7 +55,7 @@ export default function TutorialList() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-4xl sm:text-6xl font-bold tracking-tight leading-[1.1]"
+            className="text-3xl sm:text-6xl font-bold tracking-tight leading-tight sm:leading-[1.1]"
           >
             Master your store with <span className="text-emerald-400">{settings.appName}</span>
           </motion.h1>

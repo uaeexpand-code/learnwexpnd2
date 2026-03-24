@@ -4,7 +4,7 @@ import { doc, onSnapshot, collection, query, where, orderBy, getDocs } from 'fir
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { Tutorial } from '../types';
 import { useAuth } from '../contexts/AuthContext';
-import { ArrowLeft, Clock, Info, ChevronUp, List, Monitor, Smartphone, CheckCircle2, ArrowRight } from 'lucide-react';
+import { ArrowLeft, Clock, Info, ChevronUp, Monitor, Smartphone, CheckCircle2, ArrowRight } from 'lucide-react';
 import { motion, useScroll, useSpring, AnimatePresence } from 'motion/react';
 import { getGoogleDriveEmbedUrl, cn } from '../utils';
 import ReactMarkdown from 'react-markdown';
@@ -17,7 +17,6 @@ export default function TutorialDetail() {
   const [nextTutorial, setNextTutorial] = useState<Tutorial | null>(null);
   const [loading, setLoading] = useState(true);
   const [showBackToTop, setShowBackToTop] = useState(false);
-  const [showToc, setShowToc] = useState(false);
   const [platform, setPlatform] = useState<'desktop' | 'mobile'>('desktop');
 
   const { scrollYProgress } = useScroll();
@@ -83,23 +82,6 @@ export default function TutorialDetail() {
     return () => unsubscribe();
   }, [id, isAdmin, navigate]);
 
-  const scrollToStep = (index: number) => {
-    const element = document.getElementById(`step-${index + 1}`);
-    if (element) {
-      const offset = 80;
-      const bodyRect = document.body.getBoundingClientRect().top;
-      const elementRect = element.getBoundingClientRect().top;
-      const elementPosition = elementRect - bodyRect;
-      const offsetPosition = elementPosition - offset;
-
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: 'smooth'
-      });
-    }
-    setShowToc(false);
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -150,22 +132,22 @@ export default function TutorialDetail() {
             >
               {tutorial.category}
             </motion.div>
-            <h1 className="text-4xl sm:text-6xl font-bold text-gray-900 tracking-tight leading-[1.1]">{tutorial.title}</h1>
-            <p className="text-xl text-gray-500 leading-relaxed max-w-3xl">{tutorial.description}</p>
+            <h1 className="text-3xl sm:text-6xl font-bold text-gray-900 tracking-tight leading-tight sm:leading-[1.1]">{tutorial.title}</h1>
+            <p className="text-lg sm:text-xl text-gray-500 leading-relaxed max-w-3xl">{tutorial.description}</p>
           </div>
           
           {isAdmin && (
             <Link
               to={`/ex-admin/edit/${tutorial.id}`}
-              className="px-6 py-3 bg-gray-900 text-white font-bold rounded-xl hover:bg-emerald-600 transition-all text-sm self-start md:self-auto shadow-lg shadow-gray-200"
+              className="w-full sm:w-auto px-6 py-3 bg-gray-900 text-white font-bold rounded-xl hover:bg-emerald-600 transition-all text-sm text-center shadow-lg shadow-gray-200"
             >
               Edit Guide
             </Link>
           )}
         </div>
 
-        <div className="flex items-center justify-between pt-8 border-t border-gray-100">
-          <div className="flex items-center space-x-4 text-sm text-gray-400 font-medium">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-8 border-t border-gray-100 gap-6">
+          <div className="flex items-center space-x-4 text-xs sm:text-sm text-gray-400 font-medium">
             <div className="flex items-center">
               <Clock className="w-4 h-4 mr-2" />
               <span>{tutorial.steps.length} Steps</span>
@@ -177,66 +159,30 @@ export default function TutorialDetail() {
             </div>
           </div>
 
-          <div className="flex items-center bg-gray-100 p-1 rounded-xl">
+          <div className="flex items-center bg-gray-100 p-1 rounded-xl w-fit">
             <button
               onClick={() => setPlatform('desktop')}
               className={cn(
-                "flex items-center px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all",
+                "flex items-center px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all",
                 platform === 'desktop' ? "bg-white text-emerald-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
               )}
             >
-              <Monitor className="w-4 h-4 mr-2" />
+              <Monitor className="w-3.5 h-3.5 sm:w-4 h-4 mr-1.5 sm:mr-2" />
               Desktop
             </button>
             <button
               onClick={() => setPlatform('mobile')}
               className={cn(
-                "flex items-center px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all",
+                "flex items-center px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all",
                 platform === 'mobile' ? "bg-white text-emerald-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
               )}
             >
-              <Smartphone className="w-4 h-4 mr-2" />
+              <Smartphone className="w-3.5 h-3.5 sm:w-4 h-4 mr-1.5 sm:mr-2" />
               Mobile
             </button>
           </div>
         </div>
       </header>
-
-      {/* Mobile TOC Button */}
-      <div className="md:hidden sticky top-20 z-40">
-        <button
-          onClick={() => setShowToc(!showToc)}
-          className="w-full bg-white/80 backdrop-blur-md border border-gray-100 p-3 rounded-xl shadow-sm flex items-center justify-between text-sm font-bold text-gray-600"
-        >
-          <div className="flex items-center space-x-2">
-            <List className="w-4 h-4 text-emerald-600" />
-            <span>Jump to Step</span>
-          </div>
-          <span className="text-xs text-gray-400">{tutorial.steps.length} Steps</span>
-        </button>
-
-        <AnimatePresence>
-          {showToc && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl p-4 space-y-2 z-50 max-h-[60vh] overflow-y-auto"
-            >
-              {tutorial.steps.map((step, i) => (
-                <button
-                  key={i}
-                  onClick={() => scrollToStep(i)}
-                  className="w-full text-left p-3 hover:bg-emerald-50 rounded-xl transition-colors flex items-center space-x-3 group"
-                >
-                  <span className="text-xs font-bold text-emerald-500">0{i + 1}</span>
-                  <span className="text-sm font-medium text-gray-700 group-hover:text-emerald-700 truncate">{step.title}</span>
-                </button>
-              ))}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
 
       {/* Steps as Sections */}
       <div className="space-y-12 sm:space-y-20">
@@ -249,11 +195,11 @@ export default function TutorialDetail() {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-100px" }}
-              className="space-y-6 sm:space-y-8 scroll-mt-24"
+              className="space-y-4 sm:space-y-8 scroll-mt-24"
               id={`step-${index + 1}`}
             >
-              <div className="space-y-3 sm:space-y-4">
-                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center">
+              <div className="space-y-2 sm:space-y-4">
+                <h2 className="text-xl sm:text-3xl font-bold text-gray-900 flex items-center">
                   <span className="text-emerald-500 mr-3 sm:mr-4 font-light">0{index + 1}.</span>
                   {step.title}
                 </h2>

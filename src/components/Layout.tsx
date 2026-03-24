@@ -49,8 +49,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               </div>
 
               <Link to="/" className="flex items-center space-x-2 group">
-                <span className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight group-hover:text-emerald-600 transition-colors">{settings.appName}</span>
-                <span className="text-xl sm:text-2xl font-light text-gray-400">Documentation</span>
+                <span className="text-lg sm:text-2xl font-bold text-gray-900 tracking-tight group-hover:text-emerald-600 transition-colors">{settings.appName}</span>
+                <span className="hidden xs:inline text-lg sm:text-2xl font-light text-gray-400">Documentation</span>
               </Link>
             </div>
 
