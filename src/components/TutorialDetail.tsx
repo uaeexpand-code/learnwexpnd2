@@ -95,6 +95,27 @@ export default function TutorialDetail() {
         style={{ scaleX }}
       />
 
+      {/* Draft Banner */}
+      {isAdmin && !tutorial.published && (
+        <div className="bg-amber-50 border border-amber-100 p-4 rounded-2xl flex items-center justify-between">
+          <div className="flex items-center">
+            <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center mr-3">
+              <Clock className="w-4 h-4 text-amber-600" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-amber-900">Draft Mode</p>
+              <p className="text-xs text-amber-700">This tutorial is only visible to administrators.</p>
+            </div>
+          </div>
+          <Link
+            to={`/ex-admin/edit/${tutorial.id}`}
+            className="px-3 py-1.5 bg-amber-600 text-white text-xs font-bold rounded-lg hover:bg-amber-700 transition-colors"
+          >
+            Publish Now
+          </Link>
+        </div>
+      )}
+
       {/* Header */}
       <header className="space-y-4 sm:space-y-6">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">

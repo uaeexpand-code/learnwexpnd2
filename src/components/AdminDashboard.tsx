@@ -4,12 +4,13 @@ import { db, handleFirestoreError, OperationType } from '../firebase';
 import { Tutorial } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Edit2, Trash2, Eye, EyeOff, MoreVertical, Search, Filter, BookOpen, Settings as SettingsIcon, AlertCircle } from 'lucide-react';
+import { Plus, Edit2, Trash2, Eye, EyeOff, MoreVertical, Search, Filter, BookOpen, Settings as SettingsIcon, AlertCircle, Layout as LayoutIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { formatDate, cn } from '../utils';
 import SettingsManager from './SettingsManager';
+import StructureEditor from './StructureEditor';
 
-type AdminTab = 'tutorials' | 'settings';
+type AdminTab = 'structure' | 'list' | 'settings';
 
 export default function AdminDashboard() {
   const { isAdmin, loading: authLoading } = useAuth();
@@ -17,7 +18,7 @@ export default function AdminDashboard() {
   const [tutorials, setTutorials] = useState<Tutorial[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<AdminTab>('tutorials');
+  const [activeTab, setActiveTab] = useState<AdminTab>('structure');
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -86,7 +87,7 @@ export default function AdminDashboard() {
   if (loading || authLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
       </div>
     );
   }
@@ -104,32 +105,42 @@ export default function AdminDashboard() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-gray-500">Manage your tutorials and documentation.</p>
+          <p className="text-gray-500">Manage your tutorials and documentation structure.</p>
         </div>
-        {activeTab === 'tutorials' && (
-          <Link
-            to="/ex-admin/new"
-            className="inline-flex items-center px-6 py-3 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 shadow-lg shadow-emerald-100 transition-all"
-          >
-            <Plus className="w-5 h-5 mr-2" />
-            Create Tutorial
-          </Link>
-        )}
+        <Link
+          to="/ex-admin/new"
+          className="inline-flex items-center px-6 py-3 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 shadow-lg shadow-emerald-100 transition-all"
+        >
+          <Plus className="w-5 h-5 mr-2" />
+          Create Tutorial
+        </Link>
       </div>
 
       {/* Tabs */}
       <div className="flex items-center space-x-1 bg-gray-100 p-1 rounded-xl w-fit">
         <button
-          onClick={() => setActiveTab('tutorials')}
+          onClick={() => setActiveTab('structure')}
           className={cn(
             "flex items-center px-6 py-2 rounded-lg text-sm font-bold transition-all",
-            activeTab === 'tutorials' 
+            activeTab === 'structure' 
+              ? "bg-white text-emerald-600 shadow-sm" 
+              : "text-gray-500 hover:text-gray-700"
+          )}
+        >
+          <LayoutIcon className="w-4 h-4 mr-2" />
+          Structure
+        </button>
+        <button
+          onClick={() => setActiveTab('list')}
+          className={cn(
+            "flex items-center px-6 py-2 rounded-lg text-sm font-bold transition-all",
+            activeTab === 'list' 
               ? "bg-white text-emerald-600 shadow-sm" 
               : "text-gray-500 hover:text-gray-700"
           )}
         >
           <BookOpen className="w-4 h-4 mr-2" />
-          Tutorials
+          List View
         </button>
         <button
           onClick={() => setActiveTab('settings')}
@@ -141,11 +152,13 @@ export default function AdminDashboard() {
           )}
         >
           <SettingsIcon className="w-4 h-4 mr-2" />
-          App Settings
+          Settings
         </button>
       </div>
 
-      {activeTab === 'tutorials' ? (
+      {activeTab === 'structure' && <StructureEditor />}
+
+      {activeTab === 'list' && (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="p-6 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="relative max-w-xs w-full">
@@ -259,9 +272,9 @@ export default function AdminDashboard() {
             )}
           </div>
         </div>
-      ) : (
-        <SettingsManager />
       )}
+
+      {activeTab === 'settings' && <SettingsManager />}
     </div>
   );
 }

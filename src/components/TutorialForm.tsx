@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { doc, getDoc, setDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
+import { doc, getDoc, setDoc, addDoc, collection, serverTimestamp, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { Tutorial, Category, TutorialStep } from '../types';
 import { useAuth } from '../contexts/AuthContext';
@@ -12,18 +12,23 @@ import { cn } from '../utils';
 export default function TutorialForm() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAdmin, loading: authLoading } = useAuth();
   const { settings } = useSettings();
   const [loading, setLoading] = useState(id ? true : false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const queryParams = new URLSearchParams(location.search);
+  const initialCategory = queryParams.get('category') || settings.categories[0] || '';
+
   const [formData, setFormData] = useState<Partial<Tutorial>>({
     title: '',
-    category: settings.categories[0] || '',
+    category: initialCategory,
     description: '',
     published: false,
     steps: [{ title: '', content: '' }],
+    order: 0,
   });
 
   useEffect(() => {
@@ -82,8 +87,26 @@ export default function TutorialForm() {
       // Strip ID and other non-field data from the document body
       const { id: _id, ...cleanData } = formData;
       
+      let finalOrder = formData.order || 0;
+
+      // If creating new, find max order in category
+      if (!id) {
+        const tutorialsRef = collection(db, 'tutorials');
+        const q = query(
+          tutorialsRef, 
+          where('category', '==', formData.category),
+          orderBy('order', 'desc'),
+          limit(1)
+        );
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+          finalOrder = (querySnapshot.docs[0].data().order || 0) + 1;
+        }
+      }
+
       const dataToSave = {
         ...cleanData,
+        order: finalOrder,
         updatedAt: serverTimestamp(),
         createdAt: formData.createdAt || serverTimestamp(),
       };

@@ -119,13 +119,18 @@ export default function SidebarContent({ onItemClick }: { onItemClick?: () => vo
                     to={`/tutorial/${item.id}`}
                     onClick={onItemClick}
                     className={cn(
-                      "block py-1.5 text-sm transition-colors",
+                      "flex items-center justify-between py-1.5 text-sm transition-colors group/item",
                       location.pathname === `/tutorial/${item.id}` 
                         ? "text-emerald-600 font-medium" 
                         : "text-gray-500 hover:text-gray-900"
                     )}
                   >
-                    {item.title}
+                    <span className="truncate">{item.title}</span>
+                    {isAdmin && !item.published && (
+                      <span className="ml-2 px-1.5 py-0.5 bg-yellow-50 text-yellow-600 text-[8px] font-bold uppercase tracking-tighter rounded border border-yellow-100 flex-shrink-0">
+                        Draft
+                      </span>
+                    )}
                   </Link>
                 </li>
               ))}
