@@ -5,9 +5,9 @@ import { db, handleFirestoreError, OperationType } from '../firebase';
 import { Tutorial, Category, TutorialStep } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { useSettings } from '../contexts/SettingsContext';
-import { Plus, Trash2, ArrowLeft, Save, GripVertical, Info, Image as ImageIcon, Video, AlertCircle, Monitor, Smartphone } from 'lucide-react';
+import { Plus, Trash2, ArrowLeft, Save, GripVertical, Info, Image as ImageIcon, Video, AlertCircle, Monitor, Smartphone, Link as LinkIcon, Zap } from 'lucide-react';
 import { motion, Reorder, AnimatePresence } from 'motion/react';
-import { cn } from '../utils';
+import { cn, cleanObject } from '../utils';
 
 export default function TutorialForm() {
   const { id } = useParams<{ id: string }>();
@@ -71,14 +71,18 @@ export default function TutorialForm() {
                 content: s.content_desktop || s.content || '',
                 image_url: s.image_url,
                 drive_url: s.drive_url,
-                tip: s.tip
+                tip: s.tip,
+                cta_text: s.cta_text || '',
+                cta_link: s.cta_link || ''
               }));
               steps_mobile = data.steps.map((s: any) => ({
                 title: s.title,
                 content: s.content_mobile || s.content || '',
                 image_url: s.image_url,
                 drive_url: s.drive_url,
-                tip: s.tip
+                tip: s.tip,
+                cta_text: s.cta_text || '',
+                cta_link: s.cta_link || ''
               }));
             }
 
@@ -115,7 +119,7 @@ export default function TutorialForm() {
     const stepsKey = editPlatform === 'desktop' ? 'steps_desktop' : 'steps_mobile';
     setFormData({
       ...formData,
-      [stepsKey]: [...(formData[stepsKey] || []), { title: '', content: '' }],
+      [stepsKey]: [...(formData[stepsKey] || []), { title: '', content: '', cta_text: '', cta_link: '' }],
     });
   };
 
@@ -135,11 +139,11 @@ export default function TutorialForm() {
       // Strip ID and other non-field data from the document body
       const { id: _id, ...cleanData } = formData;
       
-      const dataToSave = {
+      const dataToSave = cleanObject({
         ...cleanData,
         updatedAt: serverTimestamp(),
         createdAt: formData.createdAt || serverTimestamp(),
-      };
+      });
 
       if (id) {
         await setDoc(doc(db, 'tutorials', id), dataToSave);
@@ -412,16 +416,41 @@ export default function TutorialForm() {
 
                       <div className="space-y-4">
                         <div className="space-y-2">
-                          <label className="flex items-center text-[10px] font-bold text-emerald-600 uppercase tracking-widest">
-                            {editPlatform === 'desktop' ? <Monitor className="w-3 h-3 mr-1.5" /> : <Smartphone className="w-3 h-3 mr-1.5" />}
-                            {editPlatform === 'desktop' ? 'Desktop' : 'Mobile'} Instructions
-                          </label>
+                          <div className="flex items-center justify-between">
+                            <label className="flex items-center text-[10px] font-bold text-emerald-600 uppercase tracking-widest">
+                              {editPlatform === 'desktop' ? <Monitor className="w-3 h-3 mr-1.5" /> : <Smartphone className="w-3 h-3 mr-1.5" />}
+                              {editPlatform === 'desktop' ? 'Desktop' : 'Mobile'} Instructions
+                            </label>
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const content = step.content || '';
+                                  handleStepChange(index, 'content', content + ' {{cta}}');
+                                }}
+                                className="text-[10px] font-bold text-gray-400 hover:text-emerald-600 transition-colors flex items-center gap-1 px-2 py-1 rounded hover:bg-emerald-50"
+                              >
+                                <Zap className="w-3 h-3" />
+                                Add CTA
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const content = step.content || '';
+                                  handleStepChange(index, 'content', content + ' {{link:Text|URL}}');
+                                }}
+                                className="text-[10px] font-bold text-gray-400 hover:text-emerald-600 transition-colors flex items-center gap-1 px-2 py-1 rounded hover:bg-emerald-50"
+                              >
+                                <LinkIcon className="w-3 h-3" />
+                                Add Link
+                              </button>
+                            </div>
+                          </div>
                           <textarea
-                            required
                             rows={6}
                             value={step.content || ''}
                             onChange={(e) => handleStepChange(index, 'content', e.target.value)}
-                            placeholder={`${editPlatform === 'desktop' ? 'Desktop' : 'Mobile'} instructions (Markdown supported)...`}
+                            placeholder={`${editPlatform === 'desktop' ? 'Desktop' : 'Mobile'} instructions (Markdown supported). Use {{cta}} for the main button, or {{link:Text|URL}} for inline links.`}
                             className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none transition-all resize-none text-sm"
                           />
                         </div>
@@ -445,6 +474,29 @@ export default function TutorialForm() {
                             value={step.drive_url || ''}
                             onChange={(e) => handleStepChange(index, 'drive_url', e.target.value)}
                             placeholder="Google Drive Link (optional)"
+                            className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-emerald-500"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="relative">
+                          <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                          <input
+                            type="text"
+                            value={step.cta_text || ''}
+                            onChange={(e) => handleStepChange(index, 'cta_text', e.target.value)}
+                            placeholder="Step CTA Button Text (e.g. App Store)"
+                            className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-emerald-500"
+                          />
+                        </div>
+                        <div className="relative">
+                          <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                          <input
+                            type="url"
+                            value={step.cta_link || ''}
+                            onChange={(e) => handleStepChange(index, 'cta_link', e.target.value)}
+                            placeholder="Step CTA Link (optional)"
                             className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-emerald-500"
                           />
                         </div>

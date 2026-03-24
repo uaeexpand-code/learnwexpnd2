@@ -34,3 +34,28 @@ export function formatDate(timestamp: any): string {
     day: 'numeric',
   });
 }
+
+/**
+ * Recursively removes undefined values from an object.
+ * Firestore does not support undefined values.
+ */
+export function cleanObject(obj: any): any {
+  if (obj === null || typeof obj !== 'object') {
+    return obj;
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map(cleanObject);
+  }
+
+  const cleaned: any = {};
+  for (const key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      const value = obj[key];
+      if (value !== undefined) {
+        cleaned[key] = cleanObject(value);
+      }
+    }
+  }
+  return cleaned;
+}

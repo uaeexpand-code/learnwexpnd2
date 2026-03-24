@@ -4,10 +4,12 @@ export type Category = string;
 
 export interface TutorialStep {
   title: string;
-  content: string;
+  content?: string;
   image_url?: string;
   drive_url?: string;
   tip?: string;
+  cta_text?: string;
+  cta_link?: string;
 }
 
 export interface Tutorial {

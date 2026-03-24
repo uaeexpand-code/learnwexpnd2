@@ -4,7 +4,7 @@ import { doc, onSnapshot, collection, query, where, orderBy, getDocs } from 'fir
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { Tutorial } from '../types';
 import { useAuth } from '../contexts/AuthContext';
-import { ArrowLeft, Clock, Info, ChevronUp, Monitor, Smartphone, CheckCircle2, ArrowRight } from 'lucide-react';
+import { ArrowLeft, Clock, Info, ChevronUp, Monitor, Smartphone, CheckCircle2, ArrowRight, ExternalLink, Link as LinkIcon } from 'lucide-react';
 import { motion, useScroll, useSpring, AnimatePresence } from 'motion/react';
 import { getGoogleDriveEmbedUrl, cn } from '../utils';
 import ReactMarkdown from 'react-markdown';
@@ -30,8 +30,18 @@ export default function TutorialDetail() {
     const handleScroll = () => {
       setShowBackToTop(window.scrollY > 400);
     };
+    const checkPlatform = () => {
+      setPlatform(window.innerWidth < 768 ? 'mobile' : 'desktop');
+    };
+    
+    checkPlatform();
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener('resize', checkPlatform);
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', checkPlatform);
+    };
   }, []);
 
   useEffect(() => {
@@ -81,6 +91,67 @@ export default function TutorialDetail() {
 
     return () => unsubscribe();
   }, [id, isAdmin, navigate]);
+
+  const CTAButton = ({ text, link }: { text?: string; link?: string }) => {
+    if (!link) return null;
+    return (
+      <div className="my-6">
+        <a
+          href={link}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200 group no-underline"
+        >
+          <LinkIcon className="w-4 h-4" />
+          {text || 'Open Link'}
+          <ExternalLink className="w-4 h-4 opacity-50 group-hover:opacity-100 transition-opacity" />
+        </a>
+      </div>
+    );
+  };
+
+  const renderContent = (content: string, step: any) => {
+    // First, replace any {{link:text|url}} with markdown [text](url)
+    let processedContent = content.replace(/\{\{link:([^|]+)\|([^}]+)\}\}/g, '[$1]($2)');
+
+    const components = {
+      a: ({ node, ...props }: any) => (
+        <a
+          {...props}
+          className="text-emerald-600 font-bold hover:text-emerald-700 underline underline-offset-4 decoration-emerald-200 hover:decoration-emerald-500 transition-all inline-flex items-center gap-1"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {props.children}
+          <ExternalLink className="w-3 h-3 opacity-50" />
+        </a>
+      )
+    };
+
+    if (!processedContent.includes('{{cta}}')) {
+      return (
+        <ReactMarkdown components={components}>
+          {processedContent}
+        </ReactMarkdown>
+      );
+    }
+
+    const parts = processedContent.split('{{cta}}');
+    return (
+      <div className="space-y-4">
+        {parts.map((part, i) => (
+          <React.Fragment key={i}>
+            {part.trim() && (
+              <ReactMarkdown components={components}>
+                {part}
+              </ReactMarkdown>
+            )}
+            {i < parts.length - 1 && <CTAButton text={step.cta_text} link={step.cta_link} />}
+          </React.Fragment>
+        ))}
+      </div>
+    );
+  };
 
   if (loading) {
     return (
@@ -165,18 +236,6 @@ export default function TutorialDetail() {
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-8 border-t border-gray-100 gap-6">
-          <div className="flex items-center space-x-4 text-xs sm:text-sm text-gray-400 font-medium">
-            <div className="flex items-center">
-              <Clock className="w-4 h-4 mr-2" />
-              <span>{currentSteps.length} Steps</span>
-            </div>
-            <div className="w-1 h-1 bg-gray-300 rounded-full" />
-            <div className="flex items-center">
-              <CheckCircle2 className="w-4 h-4 mr-2 text-emerald-500" />
-              <span>Verified Guide</span>
-            </div>
-          </div>
-
           <div className="flex items-center bg-gray-100 p-1 rounded-xl w-fit">
             <button
               onClick={() => setPlatform('desktop')}
@@ -222,11 +281,17 @@ export default function TutorialDetail() {
                   {step.title}
                 </h2>
                 
-                <div className="prose prose-base sm:prose-lg max-w-none text-gray-600 leading-relaxed">
-                  <ReactMarkdown>
-                    {step.content}
-                  </ReactMarkdown>
-                </div>
+                {step.content && (
+                  <div className="prose prose-base sm:prose-lg max-w-none text-gray-600 leading-relaxed">
+                    {renderContent(step.content, step)}
+                  </div>
+                )}
+
+                {step.cta_link && !step.content?.includes('{{cta}}') && (
+                  <div className="mt-6">
+                    <CTAButton text={step.cta_text} link={step.cta_link} />
+                  </div>
+                )}
 
                 {step.tip && (
                   <div className="bg-emerald-50/50 border-l-4 border-emerald-500 p-4 sm:p-6 rounded-r-xl mt-4 sm:mt-6">
