@@ -17,6 +17,7 @@ export interface Tutorial {
   description: string;
   published: boolean;
   steps: TutorialStep[];
+  order: number;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }

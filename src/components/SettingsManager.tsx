@@ -54,7 +54,10 @@ export default function SettingsManager() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await updateSettings({ appName, categories });
+      await updateSettings({ 
+        appName, 
+        categories
+      });
       alert('Settings updated successfully!');
     } catch (error) {
       console.error('Failed to update settings:', error);

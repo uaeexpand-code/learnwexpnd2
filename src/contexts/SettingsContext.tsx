@@ -12,7 +12,7 @@ interface SettingsContextType {
 
 const defaultSettings: AppSettings = {
   appName: 'EXPAND DOC',
-  categories: ['Products', 'Orders', 'Pages & Content', 'Settings'],
+  categories: ['Introduction', 'Products', 'Orders', 'Pages & Content', 'Settings', 'Help and Support'],
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);

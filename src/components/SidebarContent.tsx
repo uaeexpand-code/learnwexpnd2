@@ -19,10 +19,12 @@ import {
 import { cn } from '../utils';
 
 const categoryIcons: Record<string, any> = {
+  'Introduction': Zap,
   'Products': Package,
   'Orders': ShoppingCart,
   'Pages & Content': FileText,
   'Settings': Settings,
+  'Help and Support': HelpCircle,
 };
 
 export default function SidebarContent({ onItemClick }: { onItemClick?: () => void }) {
@@ -49,6 +51,10 @@ export default function SidebarContent({ onItemClick }: { onItemClick?: () => vo
         
         // Sort in memory to avoid composite index requirements
         const sortedData = [...data].sort((a, b) => {
+          // Primary sort by order, secondary by createdAt
+          if (a.order !== b.order) {
+            return (a.order || 0) - (b.order || 0);
+          }
           const dateA = a.createdAt?.seconds || 0;
           const dateB = b.createdAt?.seconds || 0;
           return dateA - dateB;
@@ -76,23 +82,22 @@ export default function SidebarContent({ onItemClick }: { onItemClick?: () => vo
 
   return (
     <div className="p-4 space-y-8">
-      {/* Introduction Section */}
+      {/* Home Link */}
       <section>
-        <div className="flex items-center space-x-2 text-emerald-600 mb-4 px-2">
-          <Zap className="w-5 h-5" />
-          <span className="font-bold text-sm uppercase tracking-wider">Introduction</span>
-        </div>
-        <ul className="space-y-1 ml-9">
+        <ul className="space-y-1">
           <li>
             <Link 
               to="/" 
               onClick={onItemClick}
               className={cn(
-                "block py-1.5 text-sm transition-colors",
-                location.pathname === '/' ? "text-emerald-600 font-medium" : "text-gray-500 hover:text-gray-900"
+                "flex items-center space-x-3 px-3 py-2 rounded-xl text-sm font-bold transition-all",
+                location.pathname === '/' 
+                  ? "bg-emerald-50 text-emerald-600 shadow-sm" 
+                  : "text-gray-600 hover:bg-gray-50"
               )}
             >
-              Welcome
+              <LayoutIcon className="w-5 h-5" />
+              <span>Overview</span>
             </Link>
           </li>
         </ul>
@@ -135,25 +140,6 @@ export default function SidebarContent({ onItemClick }: { onItemClick?: () => vo
           </section>
         );
       })}
-
-      {/* Support Section */}
-      <section>
-        <div className="flex items-center space-x-2 text-gray-400 mb-4 px-2">
-          <HelpCircle className="w-5 h-5" />
-          <span className="font-bold text-sm uppercase tracking-wider text-gray-600">Help and Support</span>
-        </div>
-        <ul className="space-y-1 ml-9">
-          <li>
-            <a 
-              href="#" 
-              onClick={onItemClick}
-              className="block py-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors"
-            >
-              Contact Support
-            </a>
-          </li>
-        </ul>
-      </section>
     </div>
   );
 }
