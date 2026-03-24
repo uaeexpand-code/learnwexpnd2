@@ -19,12 +19,13 @@
             "type": "object",
             "properties": {
               "title": { "type": "string" },
-              "content": { "type": "string" },
+              "content_desktop": { "type": "string" },
+              "content_mobile": { "type": "string" },
               "image_url": { "type": "string" },
               "drive_url": { "type": "string" },
               "tip": { "type": "string" }
             },
-            "required": ["title", "content"]
+            "required": ["title", "content_desktop", "content_mobile"]
           }
         }
       },

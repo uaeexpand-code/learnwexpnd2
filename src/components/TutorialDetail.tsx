@@ -4,7 +4,7 @@ import { doc, onSnapshot } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { Tutorial } from '../types';
 import { useAuth } from '../contexts/AuthContext';
-import { ArrowLeft, Clock, BarChart, Info, ChevronUp, List } from 'lucide-react';
+import { ArrowLeft, Clock, BarChart, Info, ChevronUp, List, Monitor, Smartphone } from 'lucide-react';
 import { motion, useScroll, useSpring, AnimatePresence } from 'motion/react';
 import { getGoogleDriveEmbedUrl, cn } from '../utils';
 import ReactMarkdown from 'react-markdown';
@@ -17,6 +17,7 @@ export default function TutorialDetail() {
   const [loading, setLoading] = useState(true);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [showToc, setShowToc] = useState(false);
+  const [platform, setPlatform] = useState<'desktop' | 'mobile'>('desktop');
 
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, {
@@ -138,6 +139,29 @@ export default function TutorialDetail() {
           <div className="px-3 py-1 bg-emerald-50 text-emerald-700 text-[10px] font-bold rounded-full uppercase tracking-widest">
             {tutorial.category}
           </div>
+
+          <div className="flex items-center bg-gray-100 p-1 rounded-lg">
+            <button
+              onClick={() => setPlatform('desktop')}
+              className={cn(
+                "flex items-center px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all",
+                platform === 'desktop' ? "bg-white text-emerald-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
+              )}
+            >
+              <Monitor className="w-3 h-3 mr-1.5" />
+              Desktop
+            </button>
+            <button
+              onClick={() => setPlatform('mobile')}
+              className={cn(
+                "flex items-center px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all",
+                platform === 'mobile' ? "bg-white text-emerald-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
+              )}
+            >
+              <Smartphone className="w-3 h-3 mr-1.5" />
+              Mobile
+            </button>
+          </div>
         </div>
       </header>
 
@@ -198,7 +222,9 @@ export default function TutorialDetail() {
                 </h2>
                 
                 <div className="prose prose-base sm:prose-lg max-w-none text-gray-600 leading-relaxed">
-                  <ReactMarkdown>{step.content}</ReactMarkdown>
+                  <ReactMarkdown>
+                    {platform === 'desktop' ? step.content_desktop : step.content_mobile}
+                  </ReactMarkdown>
                 </div>
 
                 {step.tip && (
