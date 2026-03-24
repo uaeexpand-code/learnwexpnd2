@@ -26,7 +26,7 @@ export default function AdminDashboard() {
     }
 
     const tutorialsRef = collection(db, 'tutorials');
-    const q = query(tutorialsRef, orderBy('createdAt', 'desc'));
+    const q = query(tutorialsRef);
 
     const unsubscribe = onSnapshot(
       q,
@@ -35,7 +35,15 @@ export default function AdminDashboard() {
           id: doc.id,
           ...doc.data(),
         })) as Tutorial[];
-        setTutorials(data);
+        
+        // Sort in memory for consistency and robustness
+        const sortedData = [...data].sort((a, b) => {
+          const dateA = a.createdAt?.seconds || 0;
+          const dateB = b.createdAt?.seconds || 0;
+          return dateB - dateA; // Descending for dashboard
+        });
+        
+        setTutorials(sortedData);
         setLoading(false);
       },
       (error) => {

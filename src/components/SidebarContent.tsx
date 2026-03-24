@@ -33,10 +33,10 @@ export default function SidebarContent({ onItemClick }: { onItemClick?: () => vo
 
   useEffect(() => {
     const tutorialsRef = collection(db, 'tutorials');
-    let q = query(tutorialsRef, orderBy('createdAt', 'asc'));
+    let q = query(tutorialsRef);
 
     if (!isAdmin) {
-      q = query(tutorialsRef, where('published', '==', true), orderBy('createdAt', 'asc'));
+      q = query(tutorialsRef, where('published', '==', true));
     }
 
     const unsubscribe = onSnapshot(
@@ -46,7 +46,15 @@ export default function SidebarContent({ onItemClick }: { onItemClick?: () => vo
           id: doc.id,
           ...doc.data(),
         })) as Tutorial[];
-        setTutorials(data);
+        
+        // Sort in memory to avoid composite index requirements
+        const sortedData = [...data].sort((a, b) => {
+          const dateA = a.createdAt?.seconds || 0;
+          const dateB = b.createdAt?.seconds || 0;
+          return dateA - dateB;
+        });
+        
+        setTutorials(sortedData);
       },
       (error) => {
         handleFirestoreError(error, OperationType.LIST, 'tutorials');
