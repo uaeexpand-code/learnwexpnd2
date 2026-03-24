@@ -47,14 +47,20 @@ service cloud.firestore {
     }
 
     function isValidTutorial(data) {
-      return data.keys().hasAll(['title', 'category', 'description', 'difficulty', 'estimated_time', 'published', 'steps']) &&
+      return data.keys().hasOnly(['title', 'category', 'description', 'published', 'steps', 'createdAt', 'updatedAt']) &&
+             data.keys().hasAll(['title', 'category', 'description', 'published', 'steps', 'createdAt', 'updatedAt']) &&
              data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
              data.category is string && data.category.size() > 0 && data.category.size() < 100 &&
              data.description is string && data.description.size() < 2000 &&
-             data.difficulty in ['Beginner', 'Intermediate', 'Advanced'] &&
-             data.estimated_time is string && data.estimated_time.size() < 50 &&
              data.published is bool &&
-             data.steps is list && data.steps.size() <= 50;
+             data.steps is list && data.steps.size() <= 50 &&
+             data.steps.all(step, 
+               step.keys().hasOnly(['title', 'content', 'image_url', 'drive_url', 'tip']) &&
+               step.keys().hasAll(['title', 'content']) &&
+               step.title is string && step.content is string
+             ) &&
+             data.createdAt is timestamp &&
+             data.updatedAt is timestamp;
     }
 
     function isValidUser(data) {
