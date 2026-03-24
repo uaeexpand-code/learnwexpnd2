@@ -105,7 +105,7 @@ export default function TutorialDetail() {
           
           {isAdmin && (
             <Link
-              to={`/admin/edit/${tutorial.id}`}
+              to={`/ex-admin/edit/${tutorial.id}`}
               className="px-4 py-2 bg-white border border-gray-200 text-gray-700 font-bold rounded-lg hover:border-emerald-500 hover:text-emerald-600 transition-all text-sm self-start md:self-auto"
             >
               Edit Guide

@@ -31,9 +31,9 @@ function AppRoutes() {
       <Routes>
         <Route path="/" element={<TutorialList />} />
         <Route path="/tutorial/:id" element={<TutorialDetail />} />
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/admin/new" element={<TutorialForm />} />
-        <Route path="/admin/edit/:id" element={<TutorialForm />} />
+        <Route path="/ex-admin" element={<AdminDashboard />} />
+        <Route path="/ex-admin/new" element={<TutorialForm />} />
+        <Route path="/ex-admin/edit/:id" element={<TutorialForm />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Layout>

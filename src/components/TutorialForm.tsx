@@ -39,7 +39,7 @@ export default function TutorialForm() {
           if (docSnap.exists()) {
             setFormData(docSnap.data() as Tutorial);
           } else {
-            navigate('/admin');
+            navigate('/ex-admin');
           }
         } catch (error) {
           handleFirestoreError(error, OperationType.GET, `tutorials/${id}`);
@@ -86,7 +86,7 @@ export default function TutorialForm() {
       } else {
         await addDoc(collection(db, 'tutorials'), dataToSave);
       }
-      navigate('/admin');
+      navigate('/ex-admin');
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, id ? `tutorials/${id}` : 'tutorials');
     } finally {
@@ -107,7 +107,7 @@ export default function TutorialForm() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-1">
           <Link
-            to="/admin"
+            to="/ex-admin"
             className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-emerald-600 transition-colors"
           >
             <ArrowLeft className="w-4 h-4 mr-1" />
@@ -120,7 +120,7 @@ export default function TutorialForm() {
         <div className="flex items-center space-x-3">
           <button
             type="button"
-            onClick={() => navigate('/admin')}
+            onClick={() => navigate('/ex-admin')}
             className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900"
           >
             Cancel

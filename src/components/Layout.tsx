@@ -21,7 +21,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   const navItems = [
     { name: 'Documentation', path: '/', icon: BookOpen },
-    ...(isAdmin ? [{ name: 'Admin Dashboard', path: '/admin', icon: LayoutDashboard }] : []),
   ];
 
   return (
@@ -31,22 +30,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
-              <Link to="/" className="flex items-center space-x-2">
-                <span className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">{settings.appName}</span>
+              <Link to="/" className="flex items-center space-x-2 group">
+                <span className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight group-hover:text-emerald-600 transition-colors">{settings.appName}</span>
                 <span className="hidden sm:inline text-2xl font-light text-gray-400">Documentation</span>
               </Link>
             </div>
 
             <div className="hidden md:flex items-center space-x-4">
-              {isAdmin && (
-                <Link
-                  to="/admin"
-                  className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-emerald-600 transition-colors"
-                >
-                  Admin Dashboard
-                </Link>
-              )}
-
               {profile && (
                 <div className="flex items-center space-x-3 ml-4 pl-4 border-l border-gray-100">
                   <div className="text-right">

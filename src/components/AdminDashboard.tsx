@@ -89,7 +89,7 @@ export default function AdminDashboard() {
         </div>
         {activeTab === 'tutorials' && (
           <Link
-            to="/admin/new"
+            to="/ex-admin/new"
             className="inline-flex items-center px-6 py-3 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 shadow-lg shadow-emerald-100 transition-all"
           >
             <Plus className="w-5 h-5 mr-2" />
@@ -212,7 +212,7 @@ export default function AdminDashboard() {
                             <Eye className="w-5 h-5" />
                           </Link>
                           <Link
-                            to={`/admin/edit/${tutorial.id}`}
+                            to={`/ex-admin/edit/${tutorial.id}`}
                             className="p-2 text-gray-400 hover:text-emerald-600 transition-colors"
                             title="Edit"
                           >
