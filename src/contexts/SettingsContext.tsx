@@ -11,7 +11,7 @@ interface SettingsContextType {
 }
 
 const defaultSettings: AppSettings = {
-  appName: 'WooGuides',
+  appName: 'EXPAND DOC',
   categories: ['Products', 'Orders', 'Pages & Content', 'Settings'],
 };
 
