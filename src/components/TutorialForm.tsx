@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { doc, getDoc, setDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
+import { doc, getDoc, setDoc, addDoc, collection, serverTimestamp, deleteDoc } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { Tutorial, Category, TutorialStep } from '../types';
 import { useAuth } from '../contexts/AuthContext';
@@ -11,21 +11,38 @@ import { cn } from '../utils';
 
 export default function TutorialForm() {
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { isAdmin, loading: authLoading } = useAuth();
   const { settings } = useSettings();
   const [loading, setLoading] = useState(id ? true : false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const initialCategory = searchParams.get('category') || settings.categories[0] || '';
 
   const [formData, setFormData] = useState<Partial<Tutorial>>({
     title: '',
-    category: settings.categories[0] || '',
+    category: initialCategory,
     description: '',
     published: false,
     steps: [{ title: '', content_desktop: '', content_mobile: '' }],
   });
   const [editPlatform, setEditPlatform] = useState<'desktop' | 'mobile'>('desktop');
+
+  useEffect(() => {
+    if (!id) {
+      const categoryFromParams = searchParams.get('category');
+      if (categoryFromParams) {
+        setFormData(prev => {
+          if (prev.category === categoryFromParams) return prev;
+          return { ...prev, category: categoryFromParams };
+        });
+      }
+    }
+  }, [searchParams, id]);
 
   useEffect(() => {
     if (!authLoading && !isAdmin) {
@@ -111,6 +128,22 @@ export default function TutorialForm() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!id) return;
+    setDeleting(true);
+    try {
+      await deleteDoc(doc(db, 'tutorials', id));
+      navigate('/ex-admin');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to delete tutorial';
+      setError(errorMessage);
+      handleFirestoreError(err, OperationType.DELETE, `tutorials/${id}`);
+    } finally {
+      setDeleting(false);
+      setShowDeleteConfirm(false);
+    }
+  };
+
   if (loading || authLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -143,6 +176,15 @@ export default function TutorialForm() {
           </h1>
         </div>
         <div className="flex items-center space-x-3">
+          {id && (
+            <button
+              type="button"
+              onClick={() => setShowDeleteConfirm(true)}
+              className="px-4 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-xl transition-colors"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          )}
           <button
             type="button"
             onClick={() => navigate('/ex-admin')}
@@ -160,6 +202,48 @@ export default function TutorialForm() {
           </button>
         </div>
       </div>
+
+      <AnimatePresence>
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl space-y-6"
+            >
+              <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto">
+                <Trash2 className="w-8 h-8 text-red-600" />
+              </div>
+              
+              <div className="text-center space-y-2">
+                <h3 className="text-2xl font-bold text-gray-900">Delete Tutorial?</h3>
+                <p className="text-gray-500 leading-relaxed">
+                  Are you sure you want to delete <span className="font-bold text-gray-900">"{formData.title}"</span>? This action cannot be undone.
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="flex-1 px-6 py-3 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="flex-1 px-6 py-3 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-all shadow-lg shadow-red-100 disabled:opacity-50"
+                >
+                  {deleting ? 'Deleting...' : 'Yes, Delete'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Settings */}

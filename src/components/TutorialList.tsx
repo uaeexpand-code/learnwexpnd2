@@ -2,11 +2,11 @@ import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useSettings } from '../contexts/SettingsContext';
 import { motion } from 'motion/react';
-import { Info, BookOpen, Zap, ShieldCheck, LifeBuoy, ChevronRight } from 'lucide-react';
+import { Info, BookOpen, Zap, ShieldCheck, LifeBuoy, ChevronRight, Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function TutorialList() {
-  const { profile } = useAuth();
+  const { profile, isAdmin } = useAuth();
   const { settings } = useSettings();
 
   return (
@@ -36,12 +36,23 @@ export default function TutorialList() {
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {settings.categories.map((category) => (
-            <div key={category} className="group p-6 bg-white border border-gray-100 rounded-2xl hover:border-emerald-200 hover:shadow-lg hover:shadow-emerald-50 transition-all">
+            <div key={category} className="group p-6 bg-white border border-gray-100 rounded-2xl hover:border-emerald-200 hover:shadow-lg hover:shadow-emerald-50 transition-all relative">
               <div className="flex items-center justify-between mb-4">
                 <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center group-hover:bg-emerald-100 transition-colors">
                   <BookOpen className="w-6 h-6 text-emerald-600" />
                 </div>
-                <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-emerald-500 transition-colors" />
+                <div className="flex items-center space-x-2">
+                  {isAdmin && (
+                    <Link
+                      to={`/ex-admin/new?category=${encodeURIComponent(category)}`}
+                      className="p-2 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-600 hover:text-white transition-all shadow-sm"
+                      title={`Add tutorial to ${category}`}
+                    >
+                      <Plus className="w-4 h-4" />
+                    </Link>
+                  )}
+                  <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-emerald-500 transition-colors" />
+                </div>
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">{category}</h3>
               <p className="text-sm text-gray-500">Explore all tutorials and guides related to {category.toLowerCase()}.</p>

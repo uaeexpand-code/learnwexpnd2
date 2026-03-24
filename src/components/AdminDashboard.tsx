@@ -4,13 +4,12 @@ import { db, handleFirestoreError, OperationType } from '../firebase';
 import { Tutorial } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Edit2, Trash2, Eye, EyeOff, MoreVertical, Search, Filter, BookOpen, Settings as SettingsIcon, AlertCircle, Layout as LayoutIcon } from 'lucide-react';
+import { Plus, Edit2, Trash2, Eye, EyeOff, MoreVertical, Search, Filter, BookOpen, Settings as SettingsIcon, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { formatDate, cn } from '../utils';
 import SettingsManager from './SettingsManager';
-import StructureEditor from './StructureEditor';
 
-type AdminTab = 'structure' | 'list' | 'settings';
+type AdminTab = 'tutorials' | 'settings';
 
 export default function AdminDashboard() {
   const { isAdmin, loading: authLoading } = useAuth();
@@ -18,8 +17,10 @@ export default function AdminDashboard() {
   const [tutorials, setTutorials] = useState<Tutorial[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<AdminTab>('structure');
+  const [activeTab, setActiveTab] = useState<AdminTab>('tutorials');
   const [error, setError] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !isAdmin) {
@@ -59,12 +60,14 @@ export default function AdminDashboard() {
   }, [isAdmin, authLoading, navigate]);
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this tutorial? This action cannot be undone.')) {
-      try {
-        await deleteDoc(doc(db, 'tutorials', id));
-      } catch (error) {
-        handleFirestoreError(error, OperationType.DELETE, `tutorials/${id}`);
-      }
+    setIsDeleting(true);
+    try {
+      await deleteDoc(doc(db, 'tutorials', id));
+      setConfirmDeleteId(null);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, `tutorials/${id}`);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -87,7 +90,7 @@ export default function AdminDashboard() {
   if (loading || authLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
       </div>
     );
   }
@@ -105,42 +108,32 @@ export default function AdminDashboard() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-gray-500">Manage your tutorials and documentation structure.</p>
+          <p className="text-gray-500">Manage your tutorials and documentation.</p>
         </div>
-        <Link
-          to="/ex-admin/new"
-          className="inline-flex items-center px-6 py-3 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 shadow-lg shadow-emerald-100 transition-all"
-        >
-          <Plus className="w-5 h-5 mr-2" />
-          Create Tutorial
-        </Link>
+        {activeTab === 'tutorials' && (
+          <Link
+            to="/ex-admin/new"
+            className="inline-flex items-center px-6 py-3 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 shadow-lg shadow-emerald-100 transition-all"
+          >
+            <Plus className="w-5 h-5 mr-2" />
+            Create Tutorial
+          </Link>
+        )}
       </div>
 
       {/* Tabs */}
       <div className="flex items-center space-x-1 bg-gray-100 p-1 rounded-xl w-fit">
         <button
-          onClick={() => setActiveTab('structure')}
+          onClick={() => setActiveTab('tutorials')}
           className={cn(
             "flex items-center px-6 py-2 rounded-lg text-sm font-bold transition-all",
-            activeTab === 'structure' 
-              ? "bg-white text-emerald-600 shadow-sm" 
-              : "text-gray-500 hover:text-gray-700"
-          )}
-        >
-          <LayoutIcon className="w-4 h-4 mr-2" />
-          Structure
-        </button>
-        <button
-          onClick={() => setActiveTab('list')}
-          className={cn(
-            "flex items-center px-6 py-2 rounded-lg text-sm font-bold transition-all",
-            activeTab === 'list' 
+            activeTab === 'tutorials' 
               ? "bg-white text-emerald-600 shadow-sm" 
               : "text-gray-500 hover:text-gray-700"
           )}
         >
           <BookOpen className="w-4 h-4 mr-2" />
-          List View
+          Tutorials
         </button>
         <button
           onClick={() => setActiveTab('settings')}
@@ -152,13 +145,11 @@ export default function AdminDashboard() {
           )}
         >
           <SettingsIcon className="w-4 h-4 mr-2" />
-          Settings
+          App Settings
         </button>
       </div>
 
-      {activeTab === 'structure' && <StructureEditor />}
-
-      {activeTab === 'list' && (
+      {activeTab === 'tutorials' ? (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="p-6 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="relative max-w-xs w-full">
@@ -251,7 +242,7 @@ export default function AdminDashboard() {
                             <Edit2 className="w-5 h-5" />
                           </Link>
                           <button
-                            onClick={() => handleDelete(tutorial.id!)}
+                            onClick={() => setConfirmDeleteId(tutorial.id!)}
                             className="p-2 text-gray-400 hover:text-red-600 transition-colors"
                             title="Delete"
                           >
@@ -272,9 +263,60 @@ export default function AdminDashboard() {
             )}
           </div>
         </div>
+      ) : (
+        <SettingsManager />
       )}
 
-      {activeTab === 'settings' && <SettingsManager />}
+      {/* Custom Delete Confirmation Modal */}
+      <AnimatePresence>
+        {confirmDeleteId && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => !isDeleting && setConfirmDeleteId(null)}
+              className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden"
+            >
+              <div className="p-6 sm:p-8">
+                <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center mb-6">
+                  <Trash2 className="w-8 h-8 text-red-600" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">Delete Tutorial?</h3>
+                <p className="text-gray-500 leading-relaxed">
+                  Are you sure you want to delete this tutorial? This action is permanent and cannot be undone.
+                </p>
+              </div>
+              <div className="p-6 bg-gray-50 flex flex-col sm:flex-row gap-3">
+                <button
+                  disabled={isDeleting}
+                  onClick={() => setConfirmDeleteId(null)}
+                  className="flex-1 px-6 py-3 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-100 transition-all disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  disabled={isDeleting}
+                  onClick={() => handleDelete(confirmDeleteId)}
+                  className="flex-1 px-6 py-3 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 shadow-lg shadow-red-100 transition-all disabled:opacity-50 flex items-center justify-center"
+                >
+                  {isDeleting ? (
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    'Delete Forever'
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -14,7 +14,8 @@ import {
   HelpCircle,
   Zap,
   Layout as LayoutIcon,
-  MousePointer2
+  MousePointer2,
+  Plus
 } from 'lucide-react';
 import { cn } from '../utils';
 
@@ -87,9 +88,20 @@ export default function SidebarContent({ onItemClick }: { onItemClick?: () => vo
 
         return (
           <section key={category}>
-            <div className="flex items-center space-x-2 text-gray-400 mb-4 px-2">
-              <Icon className="w-5 h-5" />
-              <span className="font-bold text-sm uppercase tracking-wider text-gray-600">{category}</span>
+            <div className="flex items-center justify-between text-gray-400 mb-4 px-2 group/header">
+              <div className="flex items-center space-x-2">
+                <Icon className="w-5 h-5" />
+                <span className="font-bold text-sm uppercase tracking-wider text-gray-600">{category}</span>
+              </div>
+              {isAdmin && (
+                <Link
+                  to={`/ex-admin/new?category=${encodeURIComponent(category)}`}
+                  className="p-1 bg-emerald-50 text-emerald-600 rounded transition-all hover:bg-emerald-100"
+                  title={`Add tutorial to ${category}`}
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                </Link>
+              )}
             </div>
             <ul className="space-y-1 ml-9">
               {items.map((item) => (
