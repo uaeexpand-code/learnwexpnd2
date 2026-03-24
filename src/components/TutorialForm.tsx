@@ -79,8 +79,11 @@ export default function TutorialForm() {
     setSaving(true);
     setError(null);
     try {
+      // Strip ID and other non-field data from the document body
+      const { id: _id, ...cleanData } = formData;
+      
       const dataToSave = {
-        ...formData,
+        ...cleanData,
         updatedAt: serverTimestamp(),
         createdAt: formData.createdAt || serverTimestamp(),
       };
