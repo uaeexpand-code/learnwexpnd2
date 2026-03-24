@@ -2,10 +2,11 @@ import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useSettings } from '../contexts/SettingsContext';
-import { LogOut, LayoutDashboard, BookOpen, Menu, X, ChevronRight } from 'lucide-react';
+import { LogOut, LayoutDashboard, BookOpen, Menu, X, ChevronRight, Database, CheckCircle2, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Sidebar from './Sidebar';
 import SidebarContent from './SidebarContent';
+import { testConnection } from '../firebase';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { profile, logout, isAdmin } = useAuth();
@@ -13,6 +14,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+  const [dbStatus, setDbStatus] = React.useState<'checking' | 'connected' | 'error'>('checking');
+
+  React.useEffect(() => {
+    const checkConnection = async () => {
+      const isConnected = await testConnection();
+      setDbStatus(isConnected ? 'connected' : 'error');
+    };
+    checkConnection();
+  }, []);
 
   const handleLogout = async () => {
     await logout();
@@ -37,6 +47,20 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </div>
 
             <div className="hidden md:flex items-center space-x-4">
+              {/* Database Status Indicator */}
+              <div className="flex items-center space-x-2 px-3 py-1.5 rounded-full bg-gray-50 border border-gray-100">
+                {dbStatus === 'checking' ? (
+                  <div className="w-2 h-2 rounded-full bg-gray-300 animate-pulse" />
+                ) : dbStatus === 'connected' ? (
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                ) : (
+                  <AlertCircle className="w-3.5 h-3.5 text-red-500" />
+                )}
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                  {dbStatus === 'checking' ? 'Connecting...' : dbStatus === 'connected' ? 'Database Connected' : 'Connection Error'}
+                </span>
+              </div>
+
               {profile && (
                 <div className="flex items-center space-x-3 ml-4 pl-4 border-l border-gray-100">
                   <div className="text-right">

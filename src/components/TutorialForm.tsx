@@ -16,14 +16,21 @@ export default function TutorialForm() {
   const { settings } = useSettings();
   const [loading, setLoading] = useState(id ? true : false);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<Partial<Tutorial>>({
     title: '',
-    category: settings.categories[0] || '',
+    category: '',
     description: '',
     published: false,
     steps: [{ title: '', content: '' }],
   });
+
+  useEffect(() => {
+    if (!id && settings.categories.length > 0 && !formData.category) {
+      setFormData(prev => ({ ...prev, category: settings.categories[0] }));
+    }
+  }, [settings.categories, id, formData.category]);
 
   useEffect(() => {
     if (!authLoading && !isAdmin) {
@@ -74,9 +81,28 @@ export default function TutorialForm() {
     if (!isAdmin) return;
     
     setSaving(true);
+    setError(null);
     try {
+      // Destructure to remove id if it exists in formData
+      const { id: _, ...rest } = formData as any;
+      
+      // Ensure we only send the fields allowed by security rules
+      const cleanData = {
+        title: rest.title || '',
+        category: rest.category || '',
+        description: rest.description || '',
+        published: rest.published || false,
+        steps: (rest.steps || []).map((step: any) => ({
+          title: step.title || '',
+          content: step.content || '',
+          image_url: step.image_url || '',
+          drive_url: step.drive_url || '',
+          tip: step.tip || '',
+        })),
+      };
+
       const dataToSave = {
-        ...formData,
+        ...cleanData,
         updatedAt: serverTimestamp(),
         createdAt: formData.createdAt || serverTimestamp(),
       };
@@ -87,8 +113,9 @@ export default function TutorialForm() {
         await addDoc(collection(db, 'tutorials'), dataToSave);
       }
       navigate('/ex-admin');
-    } catch (error) {
-      handleFirestoreError(error, OperationType.WRITE, id ? `tutorials/${id}` : 'tutorials');
+    } catch (err: any) {
+      console.error('Error saving tutorial:', err);
+      setError(err.message || 'Failed to save tutorial. Please check your permissions and try again.');
     } finally {
       setSaving(false);
     }
@@ -103,7 +130,15 @@ export default function TutorialForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-5xl mx-auto space-y-8 pb-20">
+      {error && (
+        <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-xl">
+          <div className="flex items-center">
+            <Info className="w-5 h-5 text-red-500 mr-3" />
+            <p className="text-sm text-red-700 font-medium">{error}</p>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-1">
           <Link
