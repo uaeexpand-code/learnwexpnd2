@@ -77,7 +77,7 @@ service cloud.firestore {
     }
 
     match /tutorials/{tutorialId} {
-      allow read: if isAuthenticated() && (resource.data.published == true || isAdmin());
+      allow read: if resource.data.published == true || isAdmin();
       allow create: if isAdmin() && isValidTutorial(request.resource.data);
       allow update: if isAdmin() && isValidTutorial(request.resource.data);
       allow delete: if isAdmin();

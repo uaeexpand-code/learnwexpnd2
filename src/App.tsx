@@ -22,18 +22,15 @@ function AppRoutes() {
     );
   }
 
-  if (!user) {
-    return <Login />;
-  }
-
   return (
     <Layout>
       <Routes>
         <Route path="/" element={<TutorialList />} />
         <Route path="/tutorial/:id" element={<TutorialDetail />} />
-        <Route path="/ex-admin" element={<AdminDashboard />} />
-        <Route path="/ex-admin/new" element={<TutorialForm />} />
-        <Route path="/ex-admin/edit/:id" element={<TutorialForm />} />
+        <Route path="/login" element={!user ? <Login /> : <Navigate to="/" replace />} />
+        <Route path="/ex-admin" element={user ? <AdminDashboard /> : <Navigate to="/login" replace />} />
+        <Route path="/ex-admin/new" element={user ? <TutorialForm /> : <Navigate to="/login" replace />} />
+        <Route path="/ex-admin/edit/:id" element={user ? <TutorialForm /> : <Navigate to="/login" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Layout>
