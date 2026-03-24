@@ -27,8 +27,11 @@ export default function TutorialForm() {
     title: '',
     category: initialCategory,
     description: '',
+    cta_text: '',
+    cta_link: '',
     published: false,
-    steps: [{ title: '', content_desktop: '', content_mobile: '' }],
+    steps_desktop: [{ title: '', content: '' }],
+    steps_mobile: [{ title: '', content: '' }],
   });
   const [editPlatform, setEditPlatform] = useState<'desktop' | 'mobile'>('desktop');
 
@@ -56,14 +59,36 @@ export default function TutorialForm() {
           const docRef = doc(db, 'tutorials', id);
           const docSnap = await getDoc(docRef);
           if (docSnap.exists()) {
-            const data = docSnap.data() as Tutorial;
-            // Migrate old content field to new platform-specific fields if necessary
-            const migratedSteps = (data.steps || []).map(step => ({
-              ...step,
-              content_desktop: step.content_desktop || (step as any).content || '',
-              content_mobile: step.content_mobile || (step as any).content || '',
-            }));
-            setFormData({ ...data, steps: migratedSteps });
+            const data = docSnap.data() as any;
+            
+            // Migration logic
+            let steps_desktop = data.steps_desktop || [];
+            let steps_mobile = data.steps_mobile || [];
+            
+            if (data.steps && steps_desktop.length === 0 && steps_mobile.length === 0) {
+              steps_desktop = data.steps.map((s: any) => ({
+                title: s.title,
+                content: s.content_desktop || s.content || '',
+                image_url: s.image_url,
+                drive_url: s.drive_url,
+                tip: s.tip
+              }));
+              steps_mobile = data.steps.map((s: any) => ({
+                title: s.title,
+                content: s.content_mobile || s.content || '',
+                image_url: s.image_url,
+                drive_url: s.drive_url,
+                tip: s.tip
+              }));
+            }
+
+            setFormData({ 
+              ...data, 
+              steps_desktop, 
+              steps_mobile,
+              cta_text: data.cta_text || '',
+              cta_link: data.cta_link || ''
+            });
           } else {
             navigate('/ex-admin');
           }
@@ -80,21 +105,24 @@ export default function TutorialForm() {
   }, [id, isAdmin, authLoading, navigate]);
 
   const handleStepChange = (index: number, field: keyof TutorialStep, value: string) => {
-    const newSteps = [...(formData.steps || [])];
+    const stepsKey = editPlatform === 'desktop' ? 'steps_desktop' : 'steps_mobile';
+    const newSteps = [...(formData[stepsKey] || [])];
     newSteps[index] = { ...newSteps[index], [field]: value };
-    setFormData({ ...formData, steps: newSteps });
+    setFormData({ ...formData, [stepsKey]: newSteps });
   };
 
   const addStep = () => {
+    const stepsKey = editPlatform === 'desktop' ? 'steps_desktop' : 'steps_mobile';
     setFormData({
       ...formData,
-      steps: [...(formData.steps || []), { title: '', content_desktop: '', content_mobile: '' }],
+      [stepsKey]: [...(formData[stepsKey] || []), { title: '', content: '' }],
     });
   };
 
   const removeStep = (index: number) => {
-    const newSteps = (formData.steps || []).filter((_, i) => i !== index);
-    setFormData({ ...formData, steps: newSteps });
+    const stepsKey = editPlatform === 'desktop' ? 'steps_desktop' : 'steps_mobile';
+    const newSteps = (formData[stepsKey] || []).filter((_, i) => i !== index);
+    setFormData({ ...formData, [stepsKey]: newSteps });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -275,6 +303,29 @@ export default function TutorialForm() {
                   className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all resize-none"
                 />
               </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1 uppercase tracking-wider">CTA Button Text</label>
+                  <input
+                    type="text"
+                    value={formData.cta_text || ''}
+                    onChange={(e) => setFormData({ ...formData, cta_text: e.target.value })}
+                    placeholder="e.g., Visit Website"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1 uppercase tracking-wider">CTA Button Link</label>
+                  <input
+                    type="url"
+                    value={formData.cta_link || ''}
+                    onChange={(e) => setFormData({ ...formData, cta_link: e.target.value })}
+                    placeholder="https://example.com"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
@@ -321,11 +372,11 @@ export default function TutorialForm() {
 
             <Reorder.Group
               axis="y"
-              values={formData.steps || []}
-              onReorder={(newSteps) => setFormData({ ...formData, steps: newSteps })}
+              values={editPlatform === 'desktop' ? (formData.steps_desktop || []) : (formData.steps_mobile || [])}
+              onReorder={(newSteps) => setFormData({ ...formData, [editPlatform === 'desktop' ? 'steps_desktop' : 'steps_mobile']: newSteps })}
               className="space-y-4"
             >
-              {(formData.steps || []).map((step, index) => (
+              {(editPlatform === 'desktop' ? (formData.steps_desktop || []) : (formData.steps_mobile || [])).map((step, index) => (
                 <Reorder.Item
                   key={index}
                   value={step}
@@ -339,7 +390,7 @@ export default function TutorialForm() {
                     <div className="flex-grow space-y-4">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-emerald-600 uppercase tracking-widest">Step {index + 1}</span>
-                        {formData.steps && formData.steps.length > 1 && (
+                        {(editPlatform === 'desktop' ? formData.steps_desktop : formData.steps_mobile)?.length! > 1 && (
                           <button
                             type="button"
                             onClick={() => removeStep(index)}
@@ -360,51 +411,20 @@ export default function TutorialForm() {
                       />
 
                       <div className="space-y-4">
-                        <AnimatePresence mode="wait">
-                          {editPlatform === 'desktop' ? (
-                            <motion.div
-                              key="desktop"
-                              initial={{ opacity: 0, x: -10 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              exit={{ opacity: 0, x: 10 }}
-                              className="space-y-2"
-                            >
-                              <label className="flex items-center text-[10px] font-bold text-emerald-600 uppercase tracking-widest">
-                                <Monitor className="w-3 h-3 mr-1.5" />
-                                Desktop Instructions
-                              </label>
-                              <textarea
-                                required
-                                rows={6}
-                                value={step.content_desktop || ''}
-                                onChange={(e) => handleStepChange(index, 'content_desktop', e.target.value)}
-                                placeholder="Desktop instructions (Markdown supported)..."
-                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none transition-all resize-none text-sm"
-                              />
-                            </motion.div>
-                          ) : (
-                            <motion.div
-                              key="mobile"
-                              initial={{ opacity: 0, x: 10 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              exit={{ opacity: 0, x: -10 }}
-                              className="space-y-2"
-                            >
-                              <label className="flex items-center text-[10px] font-bold text-emerald-600 uppercase tracking-widest">
-                                <Smartphone className="w-3 h-3 mr-1.5" />
-                                Mobile Instructions
-                              </label>
-                              <textarea
-                                required
-                                rows={6}
-                                value={step.content_mobile || ''}
-                                onChange={(e) => handleStepChange(index, 'content_mobile', e.target.value)}
-                                placeholder="Mobile instructions (Markdown supported)..."
-                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none transition-all resize-none text-sm"
-                              />
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
+                        <div className="space-y-2">
+                          <label className="flex items-center text-[10px] font-bold text-emerald-600 uppercase tracking-widest">
+                            {editPlatform === 'desktop' ? <Monitor className="w-3 h-3 mr-1.5" /> : <Smartphone className="w-3 h-3 mr-1.5" />}
+                            {editPlatform === 'desktop' ? 'Desktop' : 'Mobile'} Instructions
+                          </label>
+                          <textarea
+                            required
+                            rows={6}
+                            value={step.content || ''}
+                            onChange={(e) => handleStepChange(index, 'content', e.target.value)}
+                            placeholder={`${editPlatform === 'desktop' ? 'Desktop' : 'Mobile'} instructions (Markdown supported)...`}
+                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none transition-all resize-none text-sm"
+                          />
+                        </div>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

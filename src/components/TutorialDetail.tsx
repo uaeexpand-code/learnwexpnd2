@@ -92,6 +92,10 @@ export default function TutorialDetail() {
 
   if (!tutorial) return null;
 
+  const currentSteps = platform === 'desktop' 
+    ? (tutorial.steps_desktop || (tutorial as any).steps || []) 
+    : (tutorial.steps_mobile || (tutorial as any).steps || []);
+
   return (
     <div className="max-w-4xl mx-auto space-y-8 sm:space-y-12 pb-20">
       {/* Progress Bar */}
@@ -134,6 +138,20 @@ export default function TutorialDetail() {
             </motion.div>
             <h1 className="text-3xl sm:text-6xl font-bold text-gray-900 tracking-tight leading-tight sm:leading-[1.1]">{tutorial.title}</h1>
             <p className="text-lg sm:text-xl text-gray-500 leading-relaxed max-w-3xl">{tutorial.description}</p>
+            
+            {tutorial.cta_link && tutorial.cta_text && (
+              <div className="pt-4">
+                <a
+                  href={tutorial.cta_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center px-6 py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100 group"
+                >
+                  {tutorial.cta_text}
+                  <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                </a>
+              </div>
+            )}
           </div>
           
           {isAdmin && (
@@ -150,7 +168,7 @@ export default function TutorialDetail() {
           <div className="flex items-center space-x-4 text-xs sm:text-sm text-gray-400 font-medium">
             <div className="flex items-center">
               <Clock className="w-4 h-4 mr-2" />
-              <span>{tutorial.steps.length} Steps</span>
+              <span>{currentSteps.length} Steps</span>
             </div>
             <div className="w-1 h-1 bg-gray-300 rounded-full" />
             <div className="flex items-center">
@@ -186,7 +204,7 @@ export default function TutorialDetail() {
 
       {/* Steps as Sections */}
       <div className="space-y-12 sm:space-y-20">
-        {tutorial.steps.map((step, index) => {
+        {currentSteps.map((step, index) => {
           const driveEmbedUrl = step.drive_url ? getGoogleDriveEmbedUrl(step.drive_url) : null;
           
           return (
@@ -206,7 +224,7 @@ export default function TutorialDetail() {
                 
                 <div className="prose prose-base sm:prose-lg max-w-none text-gray-600 leading-relaxed">
                   <ReactMarkdown>
-                    {platform === 'desktop' ? step.content_desktop : step.content_mobile}
+                    {step.content}
                   </ReactMarkdown>
                 </div>
 

@@ -196,7 +196,9 @@ export default function AdminDashboard() {
                           </div>
                           <div>
                             <p className="text-sm font-bold text-gray-900 line-clamp-1">{tutorial.title}</p>
-                            <p className="text-xs text-gray-500">{tutorial.steps.length} steps</p>
+                            <p className="text-xs text-gray-500">
+                              {tutorial.steps_desktop?.length || 0} Desktop • {tutorial.steps_mobile?.length || 0} Mobile
+                            </p>
                           </div>
                         </div>
                       </td>

@@ -4,8 +4,7 @@ export type Category = string;
 
 export interface TutorialStep {
   title: string;
-  content_desktop: string;
-  content_mobile: string;
+  content: string;
   image_url?: string;
   drive_url?: string;
   tip?: string;
@@ -16,8 +15,11 @@ export interface Tutorial {
   title: string;
   category: Category;
   description: string;
+  cta_text?: string;
+  cta_link?: string;
   published: boolean;
-  steps: TutorialStep[];
+  steps_desktop: TutorialStep[];
+  steps_mobile: TutorialStep[];
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
