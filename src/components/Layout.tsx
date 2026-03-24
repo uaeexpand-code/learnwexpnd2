@@ -37,10 +37,20 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <nav className="bg-white border-b border-gray-100 sticky top-0 z-50">
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
-            <div className="flex items-center">
+            <div className="flex items-center space-x-4">
+              {/* Mobile menu button */}
+              <div className="flex items-center md:hidden">
+                <button
+                  onClick={() => setIsMenuOpen(!isMenuOpen)}
+                  className="p-2 rounded-xl text-gray-600 hover:text-emerald-600 transition-all flex items-center"
+                >
+                  {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                </button>
+              </div>
+
               <Link to="/" className="flex items-center space-x-2 group">
                 <span className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight group-hover:text-emerald-600 transition-colors">{settings.appName}</span>
-                <span className="hidden sm:inline text-2xl font-light text-gray-400">Documentation</span>
+                <span className="text-xl sm:text-2xl font-light text-gray-400">Documentation</span>
               </Link>
             </div>
 
@@ -78,16 +88,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               )}
             </div>
 
-            {/* Mobile menu button */}
-            <div className="flex items-center md:hidden">
-              <button
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="p-2 rounded-xl text-gray-600 hover:text-emerald-600 hover:bg-emerald-50 transition-all flex items-center space-x-2 border border-gray-100"
-              >
-                <span className="text-sm font-bold uppercase tracking-wider">Menu</span>
-                {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-              </button>
-            </div>
+            {/* Mobile menu button removed from here */}
           </div>
         </div>
 
@@ -103,11 +104,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 md:hidden"
               />
               <motion.div
-                initial={{ x: '100%' }}
+                initial={{ x: '-100%' }}
                 animate={{ x: 0 }}
-                exit={{ x: '100%' }}
+                exit={{ x: '-100%' }}
                 transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                className="fixed right-0 top-0 bottom-0 w-[85%] max-w-sm bg-white z-50 md:hidden shadow-2xl flex flex-col"
+                className="fixed left-0 top-0 bottom-0 w-[85%] max-w-sm bg-white z-50 md:hidden shadow-2xl flex flex-col"
               >
                 <div className="p-4 border-b border-gray-100 flex items-center justify-between">
                   <span className="font-bold text-gray-900">{settings.appName}</span>
@@ -120,53 +121,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </div>
 
                 <div className="flex-grow overflow-y-auto">
-                  <div className="p-4 space-y-6">
-                    {/* Database Status Indicator - Admin Only (Mobile) */}
-                    {isAdmin && (
-                      <div className="flex items-center space-x-2 px-3 py-1.5 rounded-full bg-gray-50 border border-gray-100 w-fit">
-                        {dbStatus === 'checking' ? (
-                          <div className="w-2 h-2 rounded-full bg-gray-300 animate-pulse" />
-                        ) : dbStatus === 'connected' ? (
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                        ) : (
-                          <AlertCircle className="w-3.5 h-3.5 text-red-500" />
-                        )}
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
-                          {dbStatus === 'checking' ? 'Connecting...' : dbStatus === 'connected' ? 'Database Connected' : 'Connection Error'}
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Main Nav */}
-                    <div className="space-y-1">
-                      {navItems.map((item) => (
-                        <Link
-                          key={item.path}
-                          to={item.path}
-                          onClick={() => setIsMenuOpen(false)}
-                          className={`flex items-center justify-between p-3 rounded-xl text-sm font-bold transition-all ${
-                            location.pathname === item.path
-                              ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-100'
-                              : 'text-gray-600 hover:bg-gray-50'
-                          }`}
-                        >
-                          <div className="flex items-center space-x-3">
-                            <item.icon className="w-5 h-5" />
-                            <span>{item.name}</span>
-                          </div>
-                          <ChevronRight className="w-4 h-4 opacity-50" />
-                        </Link>
-                      ))}
-                    </div>
-
-                    <div className="h-px bg-gray-100 mx-2" />
-
-                    {/* Tutorial Navigation */}
-                    <div>
-                      <h3 className="px-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Tutorials</h3>
-                      <SidebarContent onItemClick={() => setIsMenuOpen(false)} />
-                    </div>
-                  </div>
+                  <SidebarContent onItemClick={() => setIsMenuOpen(false)} />
                 </div>
 
                 <div className="p-4 border-t border-gray-100 bg-gray-50">

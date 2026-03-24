@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { Tutorial } from '../types';
 import { useAuth } from '../contexts/AuthContext';
-import { ArrowLeft, Clock, Info, ChevronUp, List, Monitor, Smartphone } from 'lucide-react';
+import { ArrowLeft, Clock, Info, ChevronUp, List, Monitor, Smartphone, CheckCircle2, ArrowRight } from 'lucide-react';
 import { motion, useScroll, useSpring, AnimatePresence } from 'motion/react';
 import { getGoogleDriveEmbedUrl, cn } from '../utils';
 import ReactMarkdown from 'react-markdown';
@@ -14,6 +14,7 @@ export default function TutorialDetail() {
   const { isAdmin } = useAuth();
   const navigate = useNavigate();
   const [tutorial, setTutorial] = useState<Tutorial | null>(null);
+  const [nextTutorial, setNextTutorial] = useState<Tutorial | null>(null);
   const [loading, setLoading] = useState(true);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [showToc, setShowToc] = useState(false);
@@ -40,7 +41,7 @@ export default function TutorialDetail() {
     const tutorialRef = doc(db, 'tutorials', id);
     const unsubscribe = onSnapshot(
       tutorialRef,
-      (snapshot) => {
+      async (snapshot) => {
         if (snapshot.exists()) {
           const data = { id: snapshot.id, ...snapshot.data() } as Tutorial;
           if (!data.published && !isAdmin) {
@@ -48,6 +49,27 @@ export default function TutorialDetail() {
             return;
           }
           setTutorial(data);
+
+          // Fetch next tutorial in same category
+          try {
+            const tutorialsRef = collection(db, 'tutorials');
+            const q = query(
+              tutorialsRef,
+              where('category', '==', data.category),
+              where('published', '==', true),
+              orderBy('createdAt', 'asc')
+            );
+            const nextSnapshot = await getDocs(q);
+            const allTutorials = nextSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Tutorial));
+            const currentIndex = allTutorials.findIndex(t => t.id === data.id);
+            if (currentIndex !== -1 && currentIndex < allTutorials.length - 1) {
+              setNextTutorial(allTutorials[currentIndex + 1]);
+            } else {
+              setNextTutorial(null);
+            }
+          } catch (err) {
+            console.error('Error fetching next tutorial:', err);
+          }
         } else {
           navigate('/');
         }
@@ -118,47 +140,62 @@ export default function TutorialDetail() {
       )}
 
       {/* Header */}
-      <header className="space-y-4 sm:space-y-6">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div className="space-y-2 sm:space-y-4">
-            <h1 className="text-3xl sm:text-5xl font-bold text-gray-900 tracking-tight leading-tight">{tutorial.title}</h1>
-            <p className="text-lg sm:text-xl text-gray-500 leading-relaxed max-w-2xl">{tutorial.description}</p>
+      <header className="space-y-8">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div className="space-y-4">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="inline-flex items-center px-3 py-1 bg-emerald-50 text-emerald-700 text-[10px] font-bold rounded-full uppercase tracking-widest"
+            >
+              {tutorial.category}
+            </motion.div>
+            <h1 className="text-4xl sm:text-6xl font-bold text-gray-900 tracking-tight leading-[1.1]">{tutorial.title}</h1>
+            <p className="text-xl text-gray-500 leading-relaxed max-w-3xl">{tutorial.description}</p>
           </div>
           
           {isAdmin && (
             <Link
               to={`/ex-admin/edit/${tutorial.id}`}
-              className="px-4 py-2 bg-white border border-gray-200 text-gray-700 font-bold rounded-lg hover:border-emerald-500 hover:text-emerald-600 transition-all text-sm self-start md:self-auto"
+              className="px-6 py-3 bg-gray-900 text-white font-bold rounded-xl hover:bg-emerald-600 transition-all text-sm self-start md:self-auto shadow-lg shadow-gray-200"
             >
               Edit Guide
             </Link>
           )}
         </div>
 
-        <div className="flex flex-wrap items-center gap-4 sm:gap-6 pt-4 border-t border-gray-50">
-          <div className="px-3 py-1 bg-emerald-50 text-emerald-700 text-[10px] font-bold rounded-full uppercase tracking-widest">
-            {tutorial.category}
+        <div className="flex items-center justify-between pt-8 border-t border-gray-100">
+          <div className="flex items-center space-x-4 text-sm text-gray-400 font-medium">
+            <div className="flex items-center">
+              <Clock className="w-4 h-4 mr-2" />
+              <span>{tutorial.steps.length} Steps</span>
+            </div>
+            <div className="w-1 h-1 bg-gray-300 rounded-full" />
+            <div className="flex items-center">
+              <CheckCircle2 className="w-4 h-4 mr-2 text-emerald-500" />
+              <span>Verified Guide</span>
+            </div>
           </div>
 
-          <div className="flex items-center bg-gray-100 p-1 rounded-lg">
+          <div className="flex items-center bg-gray-100 p-1 rounded-xl">
             <button
               onClick={() => setPlatform('desktop')}
               className={cn(
-                "flex items-center px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all",
+                "flex items-center px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all",
                 platform === 'desktop' ? "bg-white text-emerald-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
               )}
             >
-              <Monitor className="w-3 h-3 mr-1.5" />
+              <Monitor className="w-4 h-4 mr-2" />
               Desktop
             </button>
             <button
               onClick={() => setPlatform('mobile')}
               className={cn(
-                "flex items-center px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all",
+                "flex items-center px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all",
                 platform === 'mobile' ? "bg-white text-emerald-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
               )}
             >
-              <Smartphone className="w-3 h-3 mr-1.5" />
+              <Smartphone className="w-4 h-4 mr-2" />
               Mobile
             </button>
           </div>
@@ -269,17 +306,39 @@ export default function TutorialDetail() {
       </div>
 
       {/* Footer Navigation */}
-      <footer className="pt-16 border-t border-gray-100 flex items-center justify-between">
-        <Link
-          to="/"
-          className="text-sm font-bold text-gray-400 hover:text-emerald-600 transition-colors flex items-center"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Introduction
-        </Link>
-        <p className="text-xs text-gray-300 font-medium uppercase tracking-widest">
-          End of Guide
-        </p>
+      <footer className="pt-16 space-y-12">
+        {nextTutorial && (
+          <Link
+            to={`/tutorial/${nextTutorial.id}`}
+            className="group block p-8 bg-gray-900 rounded-[2.5rem] text-white relative overflow-hidden transition-all hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <div className="absolute top-0 right-0 -mt-12 -mr-12 w-64 h-64 bg-emerald-500/20 rounded-full blur-3xl group-hover:bg-emerald-500/30 transition-colors" />
+            
+            <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+              <div className="space-y-2">
+                <p className="text-emerald-400 text-[10px] font-bold uppercase tracking-widest">Next Tutorial</p>
+                <h3 className="text-2xl sm:text-3xl font-bold group-hover:text-emerald-400 transition-colors">{nextTutorial.title}</h3>
+                <p className="text-gray-400 text-sm max-w-md line-clamp-1">{nextTutorial.description}</p>
+              </div>
+              <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center group-hover:bg-emerald-500 transition-all">
+                <ArrowRight className="w-6 h-6 text-white" />
+              </div>
+            </div>
+          </Link>
+        )}
+
+        <div className="flex items-center justify-between border-t border-gray-100 pt-8">
+          <Link
+            to="/"
+            className="text-sm font-bold text-gray-400 hover:text-emerald-600 transition-colors flex items-center group"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
+            Back to Overview
+          </Link>
+          <p className="text-xs text-gray-300 font-bold uppercase tracking-[0.2em]">
+            Documentation Hub
+          </p>
+        </div>
       </footer>
 
       {/* Back to Top Button */}

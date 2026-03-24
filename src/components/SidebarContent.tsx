@@ -15,17 +15,27 @@ import {
   Zap,
   Layout as LayoutIcon,
   MousePointer2,
-  Plus
+  Search,
+  Plus,
+  ChevronRight,
+  ChevronDown,
+  Signpost,
+  LifeBuoy,
+  Wrench,
+  Palette
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../utils';
 
 const categoryIcons: Record<string, any> = {
-  'Introduction': Zap,
+  'Introduction': Signpost,
   'Products': Package,
   'Orders': ShoppingCart,
   'Pages & Content': FileText,
   'Settings': Settings,
-  'Help and Support': HelpCircle,
+  'Help and Support': LifeBuoy,
+  'Installation': Wrench,
+  'Theme Options': Palette,
 };
 
 export default function SidebarContent({ onItemClick }: { onItemClick?: () => void }) {
@@ -33,6 +43,8 @@ export default function SidebarContent({ onItemClick }: { onItemClick?: () => vo
   const { settings } = useSettings();
   const location = useLocation();
   const [tutorials, setTutorials] = useState<Tutorial[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const tutorialsRef = collection(db, 'tutorials');
@@ -58,6 +70,13 @@ export default function SidebarContent({ onItemClick }: { onItemClick?: () => vo
         });
         
         setTutorials(sortedData);
+
+        // Initialize all categories as expanded by default
+        const initialExpanded: Record<string, boolean> = {};
+        settings.categories.forEach(cat => {
+          initialExpanded[cat] = true;
+        });
+        setExpandedCategories(initialExpanded);
       },
       (error) => {
         handleFirestoreError(error, OperationType.LIST, 'tutorials');
@@ -65,9 +84,14 @@ export default function SidebarContent({ onItemClick }: { onItemClick?: () => vo
     );
 
     return () => unsubscribe();
-  }, [isAdmin]);
+  }, [isAdmin, settings.categories]);
 
-  const groupedTutorials = tutorials.reduce((acc, tutorial) => {
+  const filteredTutorials = tutorials.filter(t => 
+    t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    t.category.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const groupedTutorials = filteredTutorials.reduce((acc, tutorial) => {
     if (!acc[tutorial.category]) {
       acc[tutorial.category] = [];
     }
@@ -75,63 +99,126 @@ export default function SidebarContent({ onItemClick }: { onItemClick?: () => vo
     return acc;
   }, {} as Record<string, Tutorial[]>);
 
+  const toggleCategory = (category: string) => {
+    setExpandedCategories(prev => ({
+      ...prev,
+      [category]: !prev[category]
+    }));
+  };
+
   const categories = settings.categories;
 
   return (
-    <div className="p-4 space-y-8">
-      {/* Dynamic Categories */}
-      {categories.map((category) => {
-        const Icon = categoryIcons[category] || BookOpen;
-        const items = groupedTutorials[category] || [];
-        
-        if (items.length === 0 && !isAdmin) return null;
+    <div className="flex flex-col h-full bg-white">
+      {/* Search Bar */}
+      <div className="p-6 pb-2 sticky top-0 bg-white z-10">
+        <div className="relative group">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-emerald-500 transition-colors" />
+          <input
+            type="text"
+            placeholder="Search the docs..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-full text-sm outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 transition-all placeholder:text-gray-400"
+          />
+        </div>
+      </div>
 
-        return (
-          <section key={category}>
-            <div className="flex items-center justify-between text-gray-400 mb-4 px-2 group/header">
-              <div className="flex items-center space-x-2">
-                <Icon className="w-5 h-5" />
-                <span className="font-bold text-sm uppercase tracking-wider text-gray-600">{category}</span>
-              </div>
-              {isAdmin && (
-                <Link
-                  to={`/ex-admin/new?category=${encodeURIComponent(category)}`}
-                  className="p-1 bg-emerald-50 text-emerald-600 rounded transition-all hover:bg-emerald-100"
-                  title={`Add tutorial to ${category}`}
+      <div className="flex-grow overflow-y-auto p-6 space-y-8">
+        {/* Dynamic Categories */}
+        {categories.map((category) => {
+          const Icon = categoryIcons[category] || BookOpen;
+          const items = groupedTutorials[category] || [];
+          const isExpanded = expandedCategories[category];
+          
+          if (items.length === 0 && !isAdmin && !searchQuery) return null;
+
+          return (
+            <section key={category} className="space-y-3">
+              <div className="flex items-center justify-between group/header">
+                <button 
+                  onClick={() => toggleCategory(category)}
+                  className="flex items-center space-x-3 flex-grow text-left"
                 >
-                  <Plus className="w-3.5 h-3.5" />
-                </Link>
-              )}
-            </div>
-            <ul className="space-y-1 ml-9">
-              {items.map((item) => (
-                <li key={item.id}>
-                  <Link
-                    to={`/tutorial/${item.id}`}
-                    onClick={onItemClick}
-                    className={cn(
-                      "flex items-center justify-between py-1.5 text-sm transition-colors group/item",
-                      location.pathname === `/tutorial/${item.id}` 
-                        ? "text-emerald-600 font-medium" 
-                        : "text-gray-500 hover:text-gray-900"
-                    )}
+                  <div className={cn(
+                    "w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300",
+                    isExpanded ? "bg-emerald-500 text-white shadow-lg shadow-emerald-100" : "bg-emerald-50 text-emerald-600"
+                  )}>
+                    <Icon className="w-4 h-4" />
+                  </div>
+                  <span className={cn(
+                    "font-bold text-sm tracking-tight transition-colors",
+                    isExpanded ? "text-emerald-600" : "text-gray-600 hover:text-gray-900"
+                  )}>
+                    {category}
+                  </span>
+                </button>
+                
+                <div className="flex items-center space-x-1">
+                  {isAdmin && (
+                    <Link
+                      to={`/ex-admin/new?category=${encodeURIComponent(category)}`}
+                      className="p-1.5 text-gray-300 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
+                      title={`Add tutorial to ${category}`}
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                    </Link>
+                  )}
+                  <button 
+                    onClick={() => toggleCategory(category)}
+                    className="p-1.5 text-gray-300 hover:text-gray-600 transition-all"
                   >
-                    <span className="truncate">{item.title}</span>
-                    {isAdmin && !item.published && (
-                      <span className="ml-2 px-1.5 py-0.5 bg-yellow-50 text-yellow-600 text-[8px] font-bold uppercase tracking-tighter rounded border border-yellow-100 flex-shrink-0">
-                        Draft
-                      </span>
+                    <ChevronDown className={cn("w-4 h-4 transition-transform duration-300", !isExpanded && "-rotate-90")} />
+                  </button>
+                </div>
+              </div>
+
+              <AnimatePresence initial={false}>
+                {isExpanded && (
+                  <motion.ul 
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="relative ml-[18px] pl-6 border-l border-gray-100 space-y-1"
+                  >
+                    {items.map((item) => {
+                      const isActive = location.pathname === `/tutorial/${item.id}`;
+                      return (
+                        <li key={item.id}>
+                          <Link
+                            to={`/tutorial/${item.id}`}
+                            onClick={onItemClick}
+                            className={cn(
+                              "flex items-center justify-between py-2 text-sm transition-all group/item",
+                              isActive 
+                                ? "text-emerald-600 font-bold" 
+                                : "text-gray-500 hover:text-gray-900"
+                            )}
+                          >
+                            <span className="truncate">{item.title}</span>
+                            <div className="flex items-center space-x-2">
+                              {isAdmin && !item.published && (
+                                <span className="px-1.5 py-0.5 bg-amber-50 text-amber-600 text-[8px] font-bold uppercase tracking-tighter rounded border border-amber-100 flex-shrink-0">
+                                  Draft
+                                </span>
+                              )}
+                            </div>
+                          </Link>
+                        </li>
+                      );
+                    })}
+                    {items.length === 0 && isAdmin && (
+                      <li className="py-2 text-[10px] text-gray-400 italic">
+                        No tutorials yet
+                      </li>
                     )}
-                  </Link>
-                </li>
-              ))}
-              {items.length === 0 && isAdmin && (
-                <li className="text-xs text-gray-400 italic py-1.5">No tutorials yet</li>
-              )}
-            </ul>
-          </section>
-        );
-      })}
+                  </motion.ul>
+                )}
+              </AnimatePresence>
+            </section>
+          );
+        })}
+      </div>
     </div>
   );
 }
