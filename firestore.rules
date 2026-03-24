@@ -1,0 +1,91 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: tutorials
+    // Document ID: auto-generated
+    // Fields:
+    //   - title: string (required)
+    //   - category: string (required, enum: Products, Orders, Pages & Content, Settings)
+    //   - description: string (required)
+    //   - difficulty: string (required, enum: Beginner, Intermediate, Advanced)
+    //   - estimated_time: string (required)
+    //   - published: boolean (required)
+    //   - createdAt: timestamp (required)
+    //   - updatedAt: timestamp (required)
+    //   - steps: list of objects (required, each with title, content, image_url, drive_url, tip)
+    //
+    // Collection: users
+    // Document ID: userId (Firebase Auth UID)
+    // Fields:
+    //   - email: string (required)
+    //   - role: string (required, enum: admin, client)
+    //   - displayName: string (optional)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        ((exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
+          request.auth.token.email == "uae.expand@gmail.com");
+    }
+
+    function isValidTutorial(data) {
+      return data.keys().hasAll(['title', 'category', 'description', 'difficulty', 'estimated_time', 'published', 'steps']) &&
+             data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
+             data.category is string && data.category.size() > 0 && data.category.size() < 100 &&
+             data.description is string && data.description.size() < 2000 &&
+             data.difficulty in ['Beginner', 'Intermediate', 'Advanced'] &&
+             data.estimated_time is string && data.estimated_time.size() < 50 &&
+             data.published is bool &&
+             data.steps is list && data.steps.size() <= 50;
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['email', 'role']) &&
+             data.email is string && data.email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$") &&
+             data.role in ['admin', 'client'];
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) && isValidUser(request.resource.data) && 
+                    (request.resource.data.role == 'client' || 
+                     (request.resource.data.role == 'admin' && request.auth.token.email == "uae.expand@gmail.com"));
+      allow update: if (isOwner(userId) && isValidUser(request.resource.data) && request.resource.data.role == resource.data.role) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /tutorials/{tutorialId} {
+      allow read: if isAuthenticated() && (resource.data.published == true || isAdmin());
+      allow create: if isAdmin() && isValidTutorial(request.resource.data);
+      allow update: if isAdmin() && isValidTutorial(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}

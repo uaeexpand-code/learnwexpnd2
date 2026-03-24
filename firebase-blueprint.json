@@ -1,0 +1,69 @@
+{
+  "entities": {
+    "Tutorial": {
+      "title": "Tutorial",
+      "description": "A step-by-step guide for WordPress/WooCommerce tasks.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "description": "The title of the tutorial." },
+        "category": { "type": "string", "enum": ["Products", "Orders", "Pages & Content", "Settings"], "description": "The category of the tutorial." },
+        "description": { "type": "string", "description": "A brief overview of the tutorial." },
+        "difficulty": { "type": "string", "enum": ["Beginner", "Intermediate", "Advanced"], "description": "The difficulty level." },
+        "estimated_time": { "type": "string", "description": "Estimated time to complete (e.g., '5 mins')." },
+        "published": { "type": "boolean", "description": "Whether the tutorial is visible to clients." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Last update timestamp." },
+        "steps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "title": { "type": "string" },
+              "content": { "type": "string" },
+              "image_url": { "type": "string" },
+              "drive_url": { "type": "string" },
+              "tip": { "type": "string" }
+            },
+            "required": ["title", "content"]
+          }
+        }
+      },
+      "required": ["title", "category", "description", "difficulty", "estimated_time", "published", "steps"]
+    },
+    "User": {
+      "title": "User",
+      "description": "User profile and permissions.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "format": "email" },
+        "role": { "type": "string", "enum": ["admin", "client"], "description": "The user's role." },
+        "displayName": { "type": "string" }
+      },
+      "required": ["email", "role"]
+    },
+    "Settings": {
+      "title": "Settings",
+      "description": "App-wide configuration settings.",
+      "type": "object",
+      "properties": {
+        "appName": { "type": "string", "description": "The name of the application." },
+        "categories": { "type": "array", "items": { "type": "string" }, "description": "List of available tutorial categories." }
+      },
+      "required": ["appName", "categories"]
+    }
+  },
+  "firestore": {
+    "/tutorials/{tutorialId}": {
+      "schema": "Tutorial",
+      "description": "Collection of tutorials."
+    },
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles and roles."
+    },
+    "/settings/{settingId}": {
+      "schema": "Settings",
+      "description": "App-wide configuration settings."
+    }
+  }
+}
