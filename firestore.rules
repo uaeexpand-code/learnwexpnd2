@@ -40,27 +40,18 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isAuthenticated() &&
-        (request.auth.token.email == "uae.expand@gmail.com" ||
-         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
-          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'));
+      return isAuthenticated() && 
+             request.auth.token.email == "uae.expand@gmail.com" && 
+             request.auth.token.email_verified == true;
     }
 
     function isValidTutorial(data) {
-      let requiredFields = ['title', 'category', 'description', 'published', 'steps', 'createdAt', 'updatedAt'];
-      return data.keys().hasAll(requiredFields) &&
-             data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
-             data.category is string && data.category.size() > 0 &&
-             data.description is string && data.description.size() < 5000 &&
+      // Basic validation to ensure required fields exist and have correct types
+      return data.title is string && 
+             data.category is string && 
+             data.description is string && 
              data.published is bool &&
-             data.steps is list && data.steps.size() <= 50 &&
-             data.steps.all(step, 
-               step.keys().hasAll(['title', 'content']) &&
-               step.title is string && step.content is string &&
-               (!('image_url' in step) || step.image_url is string) &&
-               (!('drive_url' in step) || step.drive_url is string) &&
-               (!('tip' in step) || step.tip is string)
-             ) &&
+             data.steps is list &&
              data.createdAt is timestamp &&
              data.updatedAt is timestamp;
     }
