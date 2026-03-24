@@ -78,7 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const isAdmin = profile?.role === 'admin';
+  const isAdmin = profile?.role === 'admin' || user?.email === 'uae.expand@gmail.com';
 
   return (
     <AuthContext.Provider value={{ user, profile, loading, login, logout, isAdmin }}>

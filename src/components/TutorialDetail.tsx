@@ -144,14 +144,16 @@ export default function TutorialDetail() {
   };
 
   const renderContent = (content: string, step: any) => {
+    if (!content) return null;
+    
     // First, replace any {{link:text|url}} with markdown [text](url)
     const processedContent = content.replace(/\{\{link:([^|]+)\|([^}]+)\}\}/g, '[$1]($2)');
 
     if (!processedContent.includes('{{cta}}')) {
       return (
-        <ReactMarkdown components={markdownComponents}>
-          {processedContent}
-        </ReactMarkdown>
+        <div className="prose prose-sm max-w-none prose-emerald">
+          <ReactMarkdown components={markdownComponents}>{processedContent}</ReactMarkdown>
+        </div>
       );
     }
 
@@ -160,9 +162,11 @@ export default function TutorialDetail() {
       <div className="space-y-4">
         {parts.map((part, i) => (
           <React.Fragment key={i}>
-            <ReactMarkdown components={markdownComponents}>
-              {part}
-            </ReactMarkdown>
+            {part.trim() && (
+              <div className="prose prose-sm max-w-none prose-emerald">
+                <ReactMarkdown components={markdownComponents}>{part.trim()}</ReactMarkdown>
+              </div>
+            )}
             {i < parts.length - 1 && <CTAButton text={step.cta_text} link={step.cta_link} />}
           </React.Fragment>
         ))}
@@ -181,8 +185,8 @@ export default function TutorialDetail() {
   if (!tutorial) return null;
 
   const currentSteps = platform === 'desktop' 
-    ? (tutorial.steps_desktop || (tutorial as any).steps || []) 
-    : (tutorial.steps_mobile || (tutorial as any).steps || []);
+    ? (tutorial.steps_desktop?.length > 0 && tutorial.steps_desktop[0].content ? tutorial.steps_desktop : (tutorial as any).steps || []) 
+    : (tutorial.steps_mobile?.length > 0 && tutorial.steps_mobile[0].content ? tutorial.steps_mobile : (tutorial.steps_desktop || (tutorial as any).steps || []));
 
   return (
     <div className="max-w-5xl mx-auto pb-20 px-6 sm:px-12">
@@ -224,9 +228,9 @@ export default function TutorialDetail() {
           {isAdmin && (
             <Link
               to={`/ex-admin/edit/${tutorial.id}`}
-              className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 text-gray-600 text-[10px] font-bold rounded-lg hover:bg-gray-200 transition-colors uppercase tracking-wider"
+              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-xl hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-100 uppercase tracking-wider"
             >
-              <Edit2 className="w-3 h-3" />
+              <Edit2 className="w-4 h-4" />
               Edit Tutorial
             </Link>
           )}
@@ -277,7 +281,7 @@ export default function TutorialDetail() {
                 </div>
                 
                 {step.content && (
-                  <div className="prose max-w-none">
+                  <div className="text-gray-700 leading-relaxed">
                     {renderContent(step.content, step)}
                   </div>
                 )}
@@ -294,10 +298,8 @@ export default function TutorialDetail() {
                       <Info className="w-5 h-5" />
                       <span className="text-sm font-bold uppercase tracking-wider">Note</span>
                     </div>
-                    <div className="text-[#2c3e50] leading-relaxed">
-                      <ReactMarkdown components={markdownComponents}>
-                        {step.tip}
-                      </ReactMarkdown>
+                    <div className="text-[#2c3e50] leading-relaxed prose prose-sm max-w-none prose-info">
+                      <ReactMarkdown components={markdownComponents}>{step.tip}</ReactMarkdown>
                     </div>
                   </div>
                 )}
